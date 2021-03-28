@@ -8,6 +8,7 @@ import { contractAbi, contractAddress } from './config';
 export class Form extends Component {
 
     componentWillMount() {
+        this.addressIndex = 2;
         this.ganacheUrl = "http://localhost:7545";
         this.loadBlockchainData();
         //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
@@ -45,10 +46,11 @@ export class Form extends Component {
     }
 
     async loadBlockchainData() {
+        console.log(this.addressIndex);
         let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
-        const balance = await web3.eth.getBalance(accounts[1]);
+        const balance = await web3.eth.getBalance(accounts[this.addressIndex]);
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
         console.log(accounts);
         console.log(balance);

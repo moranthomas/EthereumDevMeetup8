@@ -1,3 +1,3 @@
-# EthereumDevMeetup8
+# Ethereum Development Meetup 8
 
-Yearn React Solidity Expense Tracker App
+Building a Yearn React Solidity Expense Tracker App
