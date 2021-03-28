@@ -1,0 +1,25 @@
+# dependencies
+/Utils/node_modules
+/Wallet/node_modules
+/ui/node_modules
+/ui/.eslintcache
+ui/package.json
+
+# testing
+/coverage
+
+# production
+Wallet/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.idea
