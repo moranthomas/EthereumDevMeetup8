@@ -8,7 +8,7 @@ import { contractAbi, contractAddress } from './config';
 export class Form extends Component {
 
     componentWillMount() {
-        this.addressIndex = 2;
+        this.addressIndex = 1;
         this.ganacheUrl = "http://localhost:7545";
         this.loadBlockchainData();
         //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
@@ -47,7 +47,12 @@ export class Form extends Component {
 
     transferFunds(event)    {
 
+        event.preventDefault();
         console.log('transferring!');
+
+        let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+
 
         /* Sending ether directly from one address to another
         var txnObject = {
@@ -68,21 +73,21 @@ export class Form extends Component {
             "from":_from,
             "to": _to,
             "value": Web3.utils.toWei(_amount,'ether'),
-            "gas": 21000,         //(optional)
+            "gas": 21000,          //(optional == gasLimit)
             // "gasPrice": 4500000,  (optional)
             // "data": 'For testing' (optional)
             // "nonce": 10           (optional)
         };
 
-        Web3.eth.sendTransaction(txnObject, function(error, result){
+        web3.eth.sendTransaction(txnObject, function(error, result){
             if(error){
                 console.log( "Transaction error" ,error);
-                self.$refs.resultRef.value = "Transaction Failed";
+                this.resultRef.value = "Transaction Failed";
             }
             else{
                 //Get transaction hash
-                self.$refs.txHashRef.value = result;
-                self.$refs.resultRef.value = "Transaction Succeeded!";
+                this.txHashRef.value = result;
+                this.resultRef.value = "Transaction Succeeded!";
             }
         });
     }
@@ -98,7 +103,7 @@ export class Form extends Component {
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
         console.log(accounts);
         console.log(balance);
-        this.setState({ account: accounts[4], accountBalance: balanceInEth});
+        this.setState({ account: accounts[this.addressIndex], accountBalance: balanceInEth});
     }
 
     getContractAbiFromConfig() {
@@ -133,61 +138,51 @@ export class Form extends Component {
 
         return (
             <div>
-            <form onSubmit={this.handleSubmit}>
-                <label > Deposit DAI:
-                    <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChange} />
-                </label>
-                <input type="submit" value="Submit" />
-                <p style = {accountsStyle} >Your account: {this.state.account.substring(0,13)}</p>
-                <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
-            </form>
+                <form onSubmit={this.handleSubmit}>
+                    <label > Deposit DAI:
+                        <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChange} />
+                    </label>
+                    <input type="submit" value="Submit" />
+                    <p style = {accountsStyle} >Your account: {this.state.account.substring(0,13)}</p>
+                    <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
+                </form>
 
-            <div>
-            <div class="row">
-                <div class="col-md-6">
-                    <label for="name" class="col-lg-2 control-label"><h4>Transfer</h4></label>
-                </div>
-                <div class="col-md-6">
-                   <p>&nbsp;</p>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                     <p>From: <input ref="fromRef" id="From" type="text" /> </p>
-                </div>
-            </div>
-            <div class="row">
-                 <div class="col-md-12">
-                    <p>To:<input id="To" ref="toRef" type="text" /> </p>
-                </div>
-            </div>
-              <div class="row">
-                 <div class="col-md-6">
-                   <p>Amount:<input id="Amount" ref="amountRef" type="text"/></p>
-                </div>
-                <div class="col-md-6">
-                    <button id="Transfer" onClick={this.transferFunds}>Transfer</button>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <p>Transaction Hash : </p>
-                </div>
-                <div class="col-md-8">
-                    <input id="Tx" ref="txHashRef" type="text" />
-                </div>
-            </div>
-                        <div class="row">
-                <div class="col-md-4">
-                    <p>Result : </p>
-                </div>
-                <div class="col-md-8">
-                    <input disabled ref="resultRef" id="Result" type="text" />
-                </div>
-            </div>
 
-        </div>
-
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="name" class="col-lg-2 control-label"><h4>Transfer</h4></label>
+                    </div>
+                </div>
+                <div style = {accountsStyle} class="row">
+                    <div class="col-md-12">
+                        <p>From: <input ref="fromRef" id="From" type="text" /> </p>
+                    </div>
+                </div>
+                <div style = {accountsStyle} class="row">
+                    <div class="col-md-12">
+                        <p>To:<input id="To" ref="toRef" type="text" /> </p>
+                    </div>
+                </div>
+                <div style = {accountsStyle} class="row">
+                    <div class="col-md-6">
+                    <p>Amount:<input id="Amount" ref="amountRef" type="text"/></p>
+                    </div>
+                    <div class="col-md-6">
+                        <button id="Transfer" onClick={this.transferFunds}>Transfer</button>
+                    </div>
+                </div>
+                <div style = {accountsStyle} class="row">
+                    <div class="col-md-4">
+                        <p>Transaction Hash :  <input id="Tx" ref="txHashRef" type="text" />
+                        </p>
+                    </div>
+                </div>
+                <div style = {accountsStyle} class="row">
+                    <div class="col-md-4">
+                        <p>Result : <input disabled ref="resultRef" id="Result" type="text" />
+                        </p>
+                    </div>
+                </div>
             </div>
         )
     }
