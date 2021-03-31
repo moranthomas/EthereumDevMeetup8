@@ -69,14 +69,13 @@ export class Form extends Component {
         web3.eth.sendTransaction(txnObject, function(error, result){
             if(error){
                 console.log( "Transaction error" ,error);
-                this.resultRef.value = "Transaction Failed";
+                self.setState({ resultRef: "Transaction Failed!" });
             }
             else{
                 //Get transaction hash
                 console.log('Transaction Succeeded, Transaction Hash: ' +result);
-                self.state.txHashRef = result;
                 self.setState({ txHashRef: result });
-                self.state.resultRef = "Transaction Succeeded!";
+                self.setState({ resultRef: "Transaction Succeeded!" });
             }
         });
     }
@@ -155,7 +154,6 @@ export class Form extends Component {
                     <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
                 </form>
-
 
                 {/* <form onSubmit={this.submitAmount}>
                     <div className="form-control">
