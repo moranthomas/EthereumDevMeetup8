@@ -33,17 +33,20 @@ export class Form extends Component {
             contractAddress: '',
             contractInstance: '',
             accountBalance: '',
-            amount: '',
+            amount: '1.0',
+            ganacheUrl: 'http://localhost:7545',
+            txHashRef: '',
+            resultRef: ''
         };
     }
 
 
-    async transferFunds(event)    {
+    transferFunds(event)    {
 
         event.preventDefault();
         console.log('transferring!');
 
-        let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
 
         console.log(web3);
@@ -51,7 +54,7 @@ export class Form extends Component {
 
         const _from = "0x7b1982A914452a38163714ab9C3671928C863a1D";
         const _to = "0x8Ad3Ea4FE47557784BD1003864876FbC7d3ec879";
-        const _amount = "10";
+        const _amount = "0.5";
         let self = this;
         var txnObject = {
             "from":_from,
@@ -63,19 +66,19 @@ export class Form extends Component {
             // "nonce": 10           (optional)
         };
 
-        web3.eth.sendTransaction(txnObject, function(error, result) {console.log('done'); });
-
-        // web3.eth.sendTransaction(txnObject, function(error, result){
-        //     if(error){
-        //         console.log( "Transaction error" ,error);
-        //         this.resultRef.value = "Transaction Failed";
-        //     }
-        //     else{
-        //         //Get transaction hash
-        //         this.txHashRef.value = result;
-        //         this.resultRef.value = "Transaction Succeeded!";
-        //     }
-        // });
+        web3.eth.sendTransaction(txnObject, function(error, result){
+            if(error){
+                console.log( "Transaction error" ,error);
+                this.resultRef.value = "Transaction Failed";
+            }
+            else{
+                //Get transaction hash
+                console.log('Transaction Succeeded, Transaction Hash: ' +result);
+                self.state.txHashRef = result;
+                self.setState({ txHashRef: result });
+                self.state.resultRef = "Transaction Succeeded!";
+            }
+        });
     }
 
 
@@ -190,20 +193,18 @@ export class Form extends Component {
 
                     <div style = {accountsStyle} class="row">
                         <div class="col-md-6">
-                            Amount:<input style={inputStyle} id="Amount" ref="amountRef" type="text"/>
-                            <button id="Transfer" onClick={this.transferFunds}>Transfer</button>
+                            Amount:<input style={inputStyle} id="Amount" value={this.state.amount} type="text"/>
+                            <button id="Transfer" onClick={this.transferFunds.bind(this)}>Transfer</button>
                         </div>
                     </div>
                     <div style = {accountsStyle} class="row">
                         <div class="col-md-4">
-                            <p>Transaction Hash :  <input style={inputStyle} id="Tx" ref="txHashRef" type="text" />
-                            </p>
+                            <p style = {accountsStyle} >Transaction Hash: {this.state.txHashRef} </p>
                         </div>
                     </div>
                     <div style = {accountsStyle} class="row">
                         <div class="col-md-4">
-                            <p>Result : <input style={inputStyle} disabled ref="resultRef" id="Result" type="text" />
-                            </p>
+                            <p style = {accountsStyle} >Result: {this.state.resultRef} </p>
                         </div>
                     </div>
                 </form>
