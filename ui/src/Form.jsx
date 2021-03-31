@@ -9,7 +9,8 @@ export class Form extends Component {
 
 
     componentWillMount() {
-        this.addressIndex = 1;
+        this.fromAddressIndex = 1;
+        this.toAddressIndex = 2;
         this.ganacheUrl = "http://localhost:7545";
         this.loadBlockchainData();
         //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
@@ -26,7 +27,8 @@ export class Form extends Component {
         this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
 
         this.state = {
-            account: '',
+            fromAccount: '',
+            toAccount: '',
             contractABI: '',
             contractAddress: '',
             contractInstance: '',
@@ -82,10 +84,10 @@ export class Form extends Component {
         let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
-        const balance = await web3.eth.getBalance(accounts[this.addressIndex]);
+        const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
 
-        this.setState({ account: accounts[this.addressIndex], accountBalance: balanceInEth});
+        this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
     }
 
     getContractAbiFromConfig() {
@@ -143,10 +145,11 @@ export class Form extends Component {
             <div>
                 <form onSubmit={this.handleSubmitDepositDAI}>
                     <label > Deposit DAI:
-                        <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI} />
+                        <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI}
+                         placeholder="Amount of Dai..."/>
                     </label>
                     <input type="submit" value="Submit" />
-                    <p style = {accountsStyle} >Your account: {this.state.account.substring(0,13)}</p>
+                    <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
                 </form>
 
@@ -165,8 +168,7 @@ export class Form extends Component {
                 <form onSubmit={this.handleSubmitAmount.bind(this)}>
                     <div className="form-control">
                         <label htmlFor="text">Add Amount </label>
-                        <input style={inputStyle} type="text" value={this.state.amount}
-                        onChange={this.handleChangeAmount.bind(this)}
+                        <input style={inputStyle} type="text" value={this.state.amount} onChange={this.handleChangeAmount.bind(this)}
                         placeholder="Enter Amount ...">
                         </input>
                         <input type="submit" value="Submit" />
@@ -181,8 +183,8 @@ export class Form extends Component {
                     </div>
                     <div style = {accountsStyle} class="row">
                         <div class="col-md-12">
-                            From: <input style={inputStyle} ref="fromRef" id="From" type="text" />
-                            To:<input style={inputStyle} id="To" ref="toRef" type="text" />
+                            From: <input style={inputStyle} value={this.state.fromAccount.substring(0,13)} id="From" type="text" />
+                            To: <input style={inputStyle} value={this.state.toAccount.substring(0,13)} id="To" type="text" />
                         </div>
                     </div>
 

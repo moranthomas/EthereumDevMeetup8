@@ -3,6 +3,12 @@ import './App.css';
 import Form from './Form';
 
 function App() {
+
+  var imageStyle = {
+    width: '500px',
+    height: '300px'
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -11,7 +17,7 @@ function App() {
           Defi Wallet with Yearn Finance and React
         </p>
 
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src={logo} style={imageStyle} className="App-logo" alt="logo" />
         <Form/>
       </header>
     </div>
