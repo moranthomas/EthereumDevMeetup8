@@ -57,15 +57,6 @@ address admin;
         return balanceShares * price;
     }
 
-
-
-    /* Extra Callable */
-    function payMe(uint amount) payable public returns(bool success) {
-        balance += amount;
-        return true;
-    }
-
-
     function sendCoin(address receiver, uint amount) public returns(bool sufficient) {
         if (balances[msg.sender] < amount) return false;
         balances[msg.sender] -= amount;
@@ -82,5 +73,15 @@ address admin;
         return balances[addr];
     }
 
+    /* Extra Callable */
+    function payMe(uint amount) payable public returns(bool success) {
+        balance += amount;
+        return true;
+    }
+
+    /* Extra Callable */
+    function getContractBalance() public returns (uint balance) {
+        return balance;
+    }
 
 }

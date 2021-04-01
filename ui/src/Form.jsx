@@ -63,7 +63,7 @@ export class Form extends Component {
     getContractABI(JsonFile) {
         /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
         // const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
-        const abiString = JSON.stringify(JsonFile.abi);
+        //const abiString = JSON.stringify(JsonFile.abi);
         console.log(JsonFile.abi);
         const abi = contractAbi;
         this.setState({ contractABI: abi });
@@ -102,18 +102,18 @@ export class Form extends Component {
 
     handleSubmitDepositDAI(event) {
         event.preventDefault();
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
+        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        //const web3 = new Web3(web3Provider);
 
-        this.state.contractInstance.methods.payMe('0x8Ad3Ea4FE47557784BD1003864876FbC7d3ec879' , 2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
+        this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
             console.log(gasAmount);
 
-            if(gasAmount == 5000000)
+            if(gasAmount === 5000000)
                 console.log('Method ran out of gas');
         });
 
 
-        this.state.contractInstance.methods.payMe('0x8Ad3Ea4FE47557784BD1003864876FbC7d3ec879' , 2.0)
+        this.state.contractInstance.methods.payMe(2.0)
             .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
             function(error, transactionHash) {
 
@@ -137,8 +137,8 @@ export class Form extends Component {
 
     getContractBalance(event) {
         event.preventDefault();
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
+        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        //const web3 = new Web3(web3Provider);
 
         this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
         .then(function(result) {
