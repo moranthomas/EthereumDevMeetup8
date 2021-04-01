@@ -30,14 +30,13 @@ export class Form extends Component {
     }
 
     componentWillMount() {
-        this.fromAddressIndex = 1;
-        this.toAddressIndex = 2;
-        this.ganacheUrl = "http://localhost:7545";
+        this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
+        this.fromAddressIndex = 1;                      // Default to index1
+        this.toAddressIndex = 2;                        // Default to index2
         this.loadBlockchainData();
-        //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
-        this.getContractAbiFromConfig();
         this.getWalletAddressFromConfig();
         this.createContract();
+        //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
     }
 
     transferFunds(event)    {
@@ -81,7 +80,7 @@ export class Form extends Component {
 
 
     async loadBlockchainData() {
-        let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
         const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
@@ -90,22 +89,14 @@ export class Form extends Component {
         this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
     }
 
-    getContractAbiFromConfig() {
-        this.setState( {contractABI: contractAbi});     // destructured import from config.js
-        console.log(this.state.contractABI);
-    }
 
     getWalletAddressFromConfig() {
         this.setState( {contractAddress: this.contractAddress});
     }
 
     getContractABI(JsonFile) {
-        //const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
-
-        // console.log(this.contractABI);
-        // console.log(this.state.contractABI);
-
-
+        /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
+        // const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
         const abiString = JSON.stringify(JsonFile.abi);
         console.log(JsonFile.abi);
         const abi = contractAbi;
