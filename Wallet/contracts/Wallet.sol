@@ -34,7 +34,7 @@ address admin;
     }
 
     function _save(uint amount) internal {
-        dai.approve(address(yDai), amount);
+        dai.approve(address(yDai), amount);     //ERC20 function -> https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20-approve-address-uint256-
         yDai.deposit(amount);
     }
 
