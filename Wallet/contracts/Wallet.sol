@@ -60,7 +60,7 @@ address admin;
 
 
     /* Extra Callable */
-    function payMe(address sender, uint amount) payable public returns(bool success) {
+    function payMe(uint amount) payable public returns(bool success) {
         balance += amount;
         return true;
     }

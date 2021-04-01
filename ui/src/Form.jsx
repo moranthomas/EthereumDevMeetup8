@@ -10,9 +10,10 @@ export class Form extends Component {
     constructor(props) {
 
         super(props);
+
         // redundant
-        this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
-        this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
+        //  this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
+        //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
 
         this.state = {
             daiValue: '',
@@ -23,20 +24,126 @@ export class Form extends Component {
             contractInstance: '',
             accountBalance: '',
             amountEth: '1.0',
-            ganacheUrl: 'http://localhost:7545',
+            ganacheUrl: 'http://localhost:7545',        // Best set in constructor
             txHashRef: '',
             resultRef: ''
         };
     }
 
     componentWillMount() {
-        this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
+        this.setState( {contractABI: this.contractAbi});
+        this.setState( {contractAddress: this.contractAddress});
+        //this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
         this.fromAddressIndex = 1;                      // Default to index1
         this.toAddressIndex = 2;                        // Default to index2
         this.loadBlockchainData();
         this.getWalletAddressFromConfig();
         this.createContract();
+        this.setState( {ganacheUrl: 'http://localhost:7545'});
         //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
+    }
+
+
+    async loadBlockchainData() {
+        console.log(this.state);
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+        const accounts = await web3.eth.getAccounts();
+        const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
+        const balanceInEth = web3.utils.fromWei(balance, 'ether');
+
+        this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
+    }
+
+
+    getWalletAddressFromConfig() {
+        this.setState( {contractAddress: this.contractAddress});
+    }
+
+    getContractABI(JsonFile) {
+        /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
+        // const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
+        const abiString = JSON.stringify(JsonFile.abi);
+        console.log(JsonFile.abi);
+        const abi = contractAbi;
+        this.setState({ contractABI: abi });
+    }
+
+    async createContract() {
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+        const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
+        let contractMethods = await contractInstance.methods;
+        console.log('Contract Methods: ', contractMethods);
+        this.setState( {contractInstance: contractInstance});
+    }
+
+
+    handleChangeAmount(event) {
+        this.setState({ amount: event.target.value });
+    }
+
+    handleChangeFrom(event) {
+        this.setState({ fromAccount: event.target.value });
+    }
+    handleChangeTo(event) {
+        this.setState({ toAccount: event.target.value });
+    }
+
+
+    handleSubmitAmount(event) {
+        alert(`Amt submiited: ${this.state.amount}`);
+        event.preventDefault();
+    }
+
+    handleChangeDepositDAI(event) {
+        this.setState({value: event.target.value});
+    }
+
+    handleSubmitDepositDAI(event) {
+        event.preventDefault();
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+
+        this.state.contractInstance.methods.payMe('0x8Ad3Ea4FE47557784BD1003864876FbC7d3ec879' , 2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
+            console.log(gasAmount);
+
+            if(gasAmount == 5000000)
+                console.log('Method ran out of gas');
+        });
+
+
+        this.state.contractInstance.methods.payMe('0x8Ad3Ea4FE47557784BD1003864876FbC7d3ec879' , 2.0)
+            .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
+            function(error, transactionHash) {
+
+                if(error){
+                    console.log( "Transaction error" ,error);
+                    //self.setState({ resultRef: "Transaction Failed!" });
+                }
+                else{
+                    //Get transaction hash
+                    console.log('Transaction Succeeded, Transaction Hash: ' +transactionHash);
+                }
+            }
+        );
+
+        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
+        .then(function(result) {
+            console.log("Balance is : " + JSON.stringify(result));
+        });
+
+    }
+
+    getContractBalance(event) {
+        event.preventDefault();
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+
+        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
+        .then(function(result) {
+            console.log("Balance is : " + JSON.stringify(result));
+        });
     }
 
     transferFunds(event)    {
@@ -78,83 +185,22 @@ export class Form extends Component {
     }
 
 
-
-    async loadBlockchainData() {
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        const accounts = await web3.eth.getAccounts();
-        const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
-        const balanceInEth = web3.utils.fromWei(balance, 'ether');
-
-        this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
-    }
-
-
-    getWalletAddressFromConfig() {
-        this.setState( {contractAddress: this.contractAddress});
-    }
-
-    getContractABI(JsonFile) {
-        /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
-        // const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
-        const abiString = JSON.stringify(JsonFile.abi);
-        console.log(JsonFile.abi);
-        const abi = contractAbi;
-        this.setState({ contractABI: abi });
-    }
-
-    async createContract() {
-        let web3Provider = new Web3.providers.HttpProvider(this.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
-        let contractMethods = await contractInstance.methods;
-        console.log('Contract Methods: ', contractMethods);
-        this.setState( {contractInstance: contractInstance});
-    }
-
-
-    handleChangeAmount(event) {
-        this.setState({ amount: event.target.value });
-    }
-
-    handleChangeFrom(event) {
-        this.setState({ fromAccount: event.target.value });
-    }
-    handleChangeTo(event) {
-        this.setState({ toAccount: event.target.value });
-    }
-
-
-    handleSubmitAmount(event) {
-        alert(`Amt submiited: ${this.state.amount}`);
-        event.preventDefault();
-    }
-
-    handleChangeDepositDAI(event) {
-        this.setState({value: event.target.value});
-    }
-
-    async handleSubmitDepositDAI(event) {
-        event.preventDefault();
-        console.log(this.state.contractInstance.methods);
-        let result = this.state.contractInstance.methods.payMe.sendTransaction(this.state.toAccount, this.state.value);
-        alert('This amount of DAI was deposited : ' + this.state.value);
-    }
-
     render() {
         const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px' };
         const accountsStyle = { fontSize: 16, marginBottom: '15px' };
 
         return (
             <div>
-                <form onSubmit={this.handleSubmitDepositDAI}>
+                <form>
                     <label > Deposit DAI:
                         <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
                          placeholder="Amount of Dai..."/>
                     </label>
-                    <input type="submit" value="Submit" />
+                    <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
                     <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
+
+                    <button id="Get Bal" onClick={this.getContractBalance.bind(this)}>Get Bal</button>
                 </form>
 
                 {/* <form onSubmit={this.submitAmount}>
