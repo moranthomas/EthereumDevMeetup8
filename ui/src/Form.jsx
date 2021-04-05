@@ -1,8 +1,9 @@
 /*jshint esversion: 8 */
 import React, { Component } from 'react';
 import Web3 from 'web3';
-//import { contractJSON } from '../../Wallet/build/contracts/Wallet.json';
+import WalletContract from "./build/contracts/Wallet.json";
 import { contractAbi, contractAddress } from './config';
+import getWeb3 from "./getWeb3";
 
 
 export class Form extends Component {
@@ -16,6 +17,13 @@ export class Form extends Component {
         //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
 
         this.state = {
+            storageValue: '',
+            tempValue: '',
+            setValue: '',
+            web3: null,
+            accounts: null,
+            contract: null,
+
             daiValue: '',
             fromAccount: '',
             toAccount: '',
@@ -30,18 +38,43 @@ export class Form extends Component {
         };
     }
 
-    componentWillMount() {
-        this.setState( {contractABI: this.contractAbi});
-        this.setState( {contractAddress: this.contractAddress});
-        //this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
-        this.fromAddressIndex = 1;                      // Default to index1
-        this.toAddressIndex = 2;                        // Default to index2
-        this.loadBlockchainData();
-        this.getWalletAddressFromConfig();
-        this.createContract();
-        this.setState( {ganacheUrl: 'http://localhost:7545'});
-        //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
-    }
+    componentDidMount = async () => {
+        try {
+
+          const web3 = await getWeb3();                     // Get network provider and web3 instance.
+          const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
+          const networkId = await web3.eth.net.getId(); // Get the contract instance.
+          console.log("networkId: ", networkId);
+
+          const deployedNetwork = WalletContract.networks[networkId];
+          const instance = new web3.eth.Contract(WalletContract.abi,
+            deployedNetwork && deployedNetwork.address,
+          );
+
+          console.log("Accounts:" , accounts);
+          // Set web3, accounts, and contract to the state, and then proceed to interact with the contract's methods.
+          this.setState({ web3, accounts, contract: instance }, this.runExample);
+
+
+          /**  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **/
+          this.setState( {contractABI: this.contractAbi});
+          this.setState( {contractAddress: this.contractAddress});
+          //this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
+          this.fromAddressIndex = 1;                      // Default to index1
+          this.toAddressIndex = 2;                        // Default to index2
+          this.loadBlockchainData();
+          this.getWalletAddressFromConfig();
+          this.createContract();
+          this.setState( {ganacheUrl: 'http://localhost:7545'});
+          //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
+
+        } catch (error) {
+            alert(
+                `Failed to load web3, accounts, or contract. Check console for details.`,
+            );
+            console.error(error);
+        }
+      };
 
 
     async loadBlockchainData() {
@@ -137,14 +170,20 @@ export class Form extends Component {
 
     getContractBalance(event) {
         event.preventDefault();
-        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        //const web3 = new Web3(web3Provider);
-
-        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
+        this.state.contractInstance.methods.getContractBalance().call()
         .then(function(result) {
             console.log("Balance is : " + JSON.stringify(result));
         });
     }
+
+    setContractBalance(event) {
+        event.preventDefault();
+        this.state.contractInstance.methods.setBalance(1).call()
+        .then(function(result) {
+            console.log("Successfully incremented balance : " + JSON.stringify(result));
+        });
+    }
+
 
     transferFunds(event)    {
 
@@ -185,6 +224,7 @@ export class Form extends Component {
     }
 
 
+
     render() {
         const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px' };
         const accountsStyle = { fontSize: 16, marginBottom: '15px' };
@@ -201,7 +241,9 @@ export class Form extends Component {
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
 
                     <button id="Get Bal" onClick={this.getContractBalance.bind(this)}>Get Bal</button>
+                    <button id="Set Bal" onClick={this.setContractBalance.bind(this)}>Increment Bal</button>
                 </form>
+
 
                 {/* <form onSubmit={this.submitAmount}>
                     <div className="form-control">

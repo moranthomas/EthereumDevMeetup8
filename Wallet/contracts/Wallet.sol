@@ -27,6 +27,18 @@ address admin;
         balances[tx.origin] = 10000;
     }
 
+    /* SimpleStorage */
+    uint storedData;
+
+    function set(uint x) public {
+        storedData = x;
+    }
+
+    function get() public view returns (uint) {
+        return storedData;
+    }
+
+
     function save(uint amount) external {
         // No need for admin check here.
         dai.transferFrom(msg.sender, address(this), amount);
@@ -82,6 +94,10 @@ address admin;
     /* Extra Callable */
     function getContractBalance() public returns (uint balance) {
         return balance;
+    }
+
+    function setBalance(uint x) public {
+        balance = balance + x;
     }
 
 }
