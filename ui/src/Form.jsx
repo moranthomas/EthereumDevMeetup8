@@ -5,6 +5,13 @@ import WalletContract from "./build/contracts/Wallet.json";
 import { contractAbi, contractAddress } from './config';
 import getWeb3 from "./getWeb3";
 
+const web3utils = require('./utils/Web3 Utils');
+//const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
+const ganacheUrl = "http://localhost:8545";
+
+let web3Provider = new Web3.providers.HttpProvider(ganacheUrl);
+var web3 = new Web3(web3Provider);
+
 
 export class Form extends Component {
 
@@ -12,7 +19,7 @@ export class Form extends Component {
 
         super(props);
 
-        // redundant
+        //  redundant: constructor bindings
         //  this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
         //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
 
@@ -32,7 +39,7 @@ export class Form extends Component {
             contractInstance: '',
             accountBalance: '',
             amountEth: '1.0',
-            ganacheUrl: 'http://localhost:7545',        // Best set in constructor
+            ganacheUrl: '',
             txHashRef: '',
             resultRef: ''
         };
@@ -40,6 +47,8 @@ export class Form extends Component {
 
     componentDidMount = async () => {
         try {
+
+          console.log(web3utils.ganacheUrl);
 
           const web3 = await getWeb3();                     // Get network provider and web3 instance.
           const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.

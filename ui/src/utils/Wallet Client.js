@@ -2,12 +2,8 @@
   const Web3 = require('web3');
   const web3utils = require('./Web3 Utils');
 
-  const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
-  const ganacheUrl = "http://localhost:8545";
-
-  let web3Provider = new Web3.providers.HttpProvider(ganacheUrl);
-
-  web3 = new Web3(web3Provider);
+  let web3Provider = new Web3.providers.HttpProvider(web3utils.ganacheUrl);
+  let web3 = new Web3(web3Provider);
 
   const iEarnContract = '0x9Dde7cdd09dbed542fC422d18d89A589fA9fD4C0';
   const erc20ABI = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"showMeTheMoney","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_spender","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Approval","type":"event"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}];
@@ -15,7 +11,6 @@
 
   const address = '0x9b7421fC327E1B5123Ff9aDDD4B21d44557a3a13';  // account address
   const vaddress = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B'; // Vitalik
-
 
   web3utils.getCurrentGasPrice();
   web3utils.getAddressBalance('0xde0E025cf7C4AF2AAb3B0a896803ECC8253e18dF');
@@ -33,8 +28,6 @@
   // Create Wallet Contract
   var WalletContract = new web3.eth.Contract(contractAbi, contractAddress);
 
-  console.log(WalletContract.methods)
-
   // Get balance in Wallet
   WalletContract.methods.balance().call((err, data) => {
     console.log(' Wallet balance  = ' + data);
@@ -50,6 +43,8 @@
   });
 
 
+  // Wallet Contract Interactions - these will be moved out into the React Components
+
   /*WalletContract.methods.save(1010).send({from: '0x9b7421fC327E1B5123Ff9aDDD4B21d44557a3a13'})
   .then(function(receipt){
     console.log(' SETTING STORAGE DATA: transaction Hash = ' + receipt.transactionHash + ', Gas used = ' + receipt.gasUsed);
@@ -61,15 +56,6 @@
 
   StorageContract.methods.getData().call((err, data) => {
     console.log(' STORAGE DATA BEFORE  = ' + data);
-  });
-
-  StorageContract.methods.setData('Blue Sky').send({from: '0x9b7421fC327E1B5123Ff9aDDD4B21d44557a3a13'})
-  .then(function(receipt){
-    console.log(' SETTING STORAGE DATA: transaction Hash = ' + receipt.transactionHash + ', Gas used = ' + receipt.gasUsed);
-      // Display The Data
-    StorageContract.methods.getData().call((err, data) => {
-      console.log(' STORAGE DATA NOW = ' + data);
-    });
   });
 
 */
