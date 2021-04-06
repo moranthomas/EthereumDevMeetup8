@@ -2,8 +2,8 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
 import WalletContract from "./build/contracts/Wallet.json";
-//import { contractAbi, contractAddress } from './config';
-import getWeb3 from "./getWeb3";
+//import { contractAbi, contractAddress } from './utils/config';
+import getWeb3 from "./utils/getWeb3";
 
 const web3utils = require('./utils/Web3 Utils');
 const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
@@ -265,7 +265,6 @@ export class Form extends Component {
 
                 </form>
 
-
                 {/* <form onSubmit={this.submitAmount}>
                     <div className="form-control">
                         <label htmlFor="text">Add Amount </label>
@@ -384,9 +383,7 @@ export class Form extends Component {
         const response = await contract.methods.getContractBalance().call();
         // Update state with the result.
         this.setState({ storageValue: response });
-
     }
-
 
 }
 
