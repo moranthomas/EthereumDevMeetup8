@@ -1,7 +1,7 @@
 pragma solidity ^0.6.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 //https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol;
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 interface IYDAI {
   function deposit(uint _amount) external;
@@ -11,17 +11,16 @@ interface IYDAI {
 }
 
 contract Wallet {
-address admin;
 
+    address admin;
     IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);        // from etherscan
     IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);         // from yearn finance registry
 
-    uint public data = 9;
     uint public balance;
-
     mapping (address => uint) balances;
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
+    // msg.sender is the address that sent the transaction
     constructor() public {
         admin = msg.sender;
         balances[tx.origin] = 10000;
@@ -39,19 +38,6 @@ address admin;
     function incrementContractBalance(uint x) public {
         balance = x;
     }
-
-
-    /* SimpleStorage */
-    uint storedData;
-
-    function set(uint x) public {
-        storedData = x;
-    }
-
-    function get() public view returns (uint) {
-        return storedData;
-    }
-
 
     function save(uint amount) external {
         // No need for admin check here.
