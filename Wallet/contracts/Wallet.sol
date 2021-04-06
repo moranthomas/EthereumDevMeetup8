@@ -36,6 +36,10 @@ address admin;
         balance = x;
     }
 
+    function incrementContractBalance(uint x) public {
+        balance = x;
+    }
+
 
     /* SimpleStorage */
     uint storedData;

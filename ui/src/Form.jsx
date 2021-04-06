@@ -2,26 +2,20 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
 import WalletContract from "./build/contracts/Wallet.json";
-import { contractAbi, contractAddress } from './config';
+//import { contractAbi, contractAddress } from './config';
 import getWeb3 from "./getWeb3";
 
 const web3utils = require('./utils/Web3 Utils');
-//const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
+const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
 const ganacheUrl = "http://localhost:8545";
 
 let web3Provider = new Web3.providers.HttpProvider(ganacheUrl);
 var web3 = new Web3(web3Provider);
 
-
 export class Form extends Component {
 
     constructor(props) {
-
         super(props);
-
-        //  redundant: constructor bindings
-        //  this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
-        //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
 
         this.state = {
             storageValue: '',
@@ -43,38 +37,40 @@ export class Form extends Component {
             txHashRef: '',
             resultRef: ''
         };
+
+         // Redundant: constructor bindings
+        //  this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
+        //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
+
     }
 
     componentDidMount = async () => {
         try {
 
-          console.log(web3utils.ganacheUrl);
 
           const web3 = await getWeb3();                     // Get network provider and web3 instance.
           const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
-          const networkId = await web3.eth.net.getId(); // Get the contract instance.
+          const networkId = await web3.eth.net.getId();     // Get the contract instance.
+          const deployedNetwork = WalletContract.networks[networkId];
+          const instance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
+
+          // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
+          this.setState({ web3, accounts, contract: instance });
+          this.fromAddressIndex = 1;                                // Default to index1
+          this.toAddressIndex = 2;                                  // Default to index2
+          console.log("ethereum blockchain", web3utils.ganacheUrl);
           console.log("networkId: ", networkId);
 
-          const deployedNetwork = WalletContract.networks[networkId];
-          const instance = new web3.eth.Contract(WalletContract.abi,
-            deployedNetwork && deployedNetwork.address,
-          );
-
-          // Set web3, accounts, and contract to the state, and then proceed to interact with the contract's methods.
-          this.setState({ web3, accounts, contract: instance });
-
-
-          /**  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **/
+          /*********************************************************************************/
+          this.loadBlockchainData();
           this.setState( {contractABI: WalletContract.abi});
           this.setState( {contractAddress: deployedNetwork.address});
-          //this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
-          this.fromAddressIndex = 1;                      // Default to index1
-          this.toAddressIndex = 2;                        // Default to index2
-          this.loadBlockchainData();
-          this.getWalletAddressFromConfig();
-          //this.createContract();
           this.setState( {ganacheUrl: web3utils.ganacheUrl});
-          //this.getContractABI('../Wallet/build/contracts/Wallet.json');
+          // this.state.contractABI = contractAbi;          // Get the  abi from config.js
+          // this.getWalletAddressFromConfig();             // Get address  from config.js
+          // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
+          // this.createContract();                // Alternative to  react trufflebox method
+          /*********************************************************************************/
 
         } catch (error) {
             alert(
@@ -87,7 +83,7 @@ export class Form extends Component {
 
     async loadBlockchainData() {
 
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);      // alternative to getWeb3
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
         const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
@@ -98,19 +94,18 @@ export class Form extends Component {
     }
 
 
-    getWalletAddressFromConfig() {
-        this.setState( {contractAddress: this.contractAddress});
-    }
+    // getWalletAddressFromConfig() {
+    //     this.setState( {contractAddress: this.contractAddress});
+    // }
 
-    getContractABI(JsonFile) {
-        /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
-        // const contractJSON = JSON.parse(fs.readFileSync(JsonFile, 'utf8'));
-        //const abiString = JSON.stringify(JsonFile.abi);
-        console.log(JsonFile.abi);
-        const abi = contractAbi;
-        this.setState({ contractABI: abi });
-    }
-
+    // getContractABIFromJsonFile(file) {
+    //     /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
+    //      const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
+    //     const abiString = JSON.stringify(file.abi);
+    //     console.log(file.abi);
+    //     const abi = contractAbi;
+    //     this.setState({ contractABI: abi });
+    // }
 
     // async createContract() {
     //     let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
@@ -122,6 +117,38 @@ export class Form extends Component {
     // }
 
 
+    /* Storage interaction */
+    getContractBalance = async(event) => {
+        event.preventDefault();
+
+        const { accounts, contract } = this.state;
+        console.log('contract.methods = ', contract.methods);
+        const response = await contract.methods.getContractBalance().call();
+        console.log('response = ', response);
+    }
+
+    incrementContractBalance = async(event) => {
+
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
+
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+        console.log(' Stored value NOW = ' , response);
+    }
+
+
+
+    /* Amount Utilities */
     handleChangeAmount(event) {
         this.setState({ amount: event.target.value });
     }
@@ -176,34 +203,6 @@ export class Form extends Component {
             console.log("Balance is : " + JSON.stringify(result));
         });
 
-    }
-
-    getContractBalance = async(event) => {
-        event.preventDefault();
-
-        const { accounts, contract } = this.state;
-        console.log('contract.methods = ', contract.methods);
-        const response = await contract.methods.getContractBalance().call();
-        console.log('response = ', response);
-    }
-
-    incrementContractBalance = async(event) => {
-
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
-
-        // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-
-        console.log(' Stored value NOW = ' , response);
     }
 
 
