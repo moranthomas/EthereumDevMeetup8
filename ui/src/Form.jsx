@@ -56,16 +56,17 @@ export class Form extends Component {
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
           this.setState({ web3, accounts, contract: instance });
-          this.fromAddressIndex = 1;                                // Default to index1
-          this.toAddressIndex = 2;                                  // Default to index2
-          console.log("ethereum blockchain", web3utils.ganacheUrl);
-          console.log("networkId: ", networkId);
+          this.fromAddressIndex = 1;                                // Account From: Default to index1
+          this.toAddressIndex = 2;                                  // Account To: Default to index2
+          console.log("Ethereum blockchain address: ", web3utils.ganacheUrl);
+          console.log("NetworkId: ", networkId);
 
           /*********************************************************************************/
           this.loadBlockchainData();
           this.setState( {contractABI: WalletContract.abi});
           this.setState( {contractAddress: deployedNetwork.address});
           this.setState( {ganacheUrl: web3utils.ganacheUrl});
+
           // this.state.contractABI = contractAbi;          // Get the  abi from config.js
           // this.getWalletAddressFromConfig();             // Get address  from config.js
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
@@ -83,13 +84,15 @@ export class Form extends Component {
 
     async loadBlockchainData() {
 
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);      // alternative to getWeb3
+        // alternative to getWeb3
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
         const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
-        this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
-
+        this.setState({ fromAccount: accounts[this.fromAddressIndex],
+                        toAccount: accounts[this.toAddressIndex],
+                        accountBalance: balanceInEth});
         console.log('this.state', this.state);
     }
 
@@ -128,7 +131,6 @@ export class Form extends Component {
     }
 
     incrementContractBalance = async(event) => {
-
         event.preventDefault();
         const { accounts, contract } = this.state;
 
@@ -261,8 +263,6 @@ export class Form extends Component {
                     <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
 
-                    <button id="Get Bal" onClick={this.getContractBalance.bind(this)}>Get Bal</button>
-                    <button id="Set Bal" onClick={this.incrementContractBalance.bind(this)}>Increment Bal</button>
                 </form>
 
 
@@ -318,9 +318,76 @@ export class Form extends Component {
                     </div>
                 </form>
 
+                <form>
+                    <div style = {accountsStyle} className="row">
+                        <label htmlFor="text">Add Amount to Contract: </label>
+                        <input style={inputStyle} type="text" value={this.state.value}  onChange={this.handleChangeAmount.bind(this)}
+                        placeholder="Enter Amount ...">
+                        </input>
+                        <button id="Set Bal" onClick={this.incrementAmount.bind(this)}>Increment Amount</button>
+                    </div>
+
+                    <div style = {accountsStyle} className="row">
+                        <label htmlFor="text">New Amount stored in Contract: </label>
+                        <input style={inputStyle} type="text" value={this.state.setValue}  onChange={this.handleSetAmount.bind(this)}
+                        placeholder="Enter Amount ...">
+                        </input>
+                        <button id="Set Bal" onClick={this.setAmount.bind(this)}>Set Amount</button>
+                    </div>
+                </form>
+
+                <div style = {accountsStyle} className="row">
+                    <div className="col-md-4">
+                        <p style = {accountsStyle} > The stored value is now: {this.state.storageValue} </p>
+                    </div>
+                </div>
+
             </div>
         )
     }
+
+    // Use ES7 async / await for dealing with Promises in a more elegant way.
+    incrementAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractBalance(value).send({ from: accounts[0] });
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+    handleChangeAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ tempValue: value });
+    }
+
+    handleSetAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ setValue: value });
+    }
+
+    setAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+        var setValue = Number(this.state.setValue);
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await contract.methods.setContractBalance(setValue).send({ from: accounts[0] })
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+    }
+
+
 }
 
 export default Form
