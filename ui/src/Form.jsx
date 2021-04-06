@@ -60,22 +60,21 @@ export class Form extends Component {
             deployedNetwork && deployedNetwork.address,
           );
 
-          console.log("Accounts:" , accounts);
           // Set web3, accounts, and contract to the state, and then proceed to interact with the contract's methods.
-          this.setState({ web3, accounts, contract: instance }, this.runExample);
+          this.setState({ web3, accounts, contract: instance });
 
 
           /**  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **/
-          this.setState( {contractABI: this.contractAbi});
-          this.setState( {contractAddress: this.contractAddress});
+          this.setState( {contractABI: WalletContract.abi});
+          this.setState( {contractAddress: deployedNetwork.address});
           //this.state.contractABI = contractAbi;           // Get the contract abi from the destructured import of config.js
           this.fromAddressIndex = 1;                      // Default to index1
           this.toAddressIndex = 2;                        // Default to index2
           this.loadBlockchainData();
           this.getWalletAddressFromConfig();
-          this.createContract();
-          this.setState( {ganacheUrl: 'http://localhost:7545'});
-          //this.getContractABI('../../Wallet/build/contracts/Wallet.json');
+          //this.createContract();
+          this.setState( {ganacheUrl: web3utils.ganacheUrl});
+          //this.getContractABI('../Wallet/build/contracts/Wallet.json');
 
         } catch (error) {
             alert(
@@ -87,14 +86,15 @@ export class Form extends Component {
 
 
     async loadBlockchainData() {
-        console.log(this.state);
+
         let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
         const accounts = await web3.eth.getAccounts();
         const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
-
         this.setState({ fromAccount: accounts[this.fromAddressIndex], toAccount: accounts[this.toAddressIndex], accountBalance: balanceInEth});
+
+        console.log('this.state', this.state);
     }
 
 
@@ -111,14 +111,15 @@ export class Form extends Component {
         this.setState({ contractABI: abi });
     }
 
-    async createContract() {
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
-        let contractMethods = await contractInstance.methods;
-        console.log('Contract Methods: ', contractMethods);
-        this.setState( {contractInstance: contractInstance});
-    }
+
+    // async createContract() {
+    //     let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+    //     const web3 = new Web3(web3Provider);
+    //     const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
+    //     let contractMethods = await contractInstance.methods;
+    //     console.log('Contract Methods: ', contractMethods);
+    //     this.setState( {contractInstance: contractInstance});
+    // }
 
 
     handleChangeAmount(event) {
@@ -177,20 +178,32 @@ export class Form extends Component {
 
     }
 
-    getContractBalance(event) {
+    getContractBalance = async(event) => {
         event.preventDefault();
-        this.state.contractInstance.methods.getContractBalance().call()
-        .then(function(result) {
-            console.log("Balance is : " + JSON.stringify(result));
-        });
+
+        const { accounts, contract } = this.state;
+        console.log('contract.methods = ', contract.methods);
+        const response = await contract.methods.getContractBalance().call();
+        console.log('response = ', response);
     }
 
-    setContractBalance(event) {
+    incrementContractBalance = async(event) => {
+
         event.preventDefault();
-        this.state.contractInstance.methods.setBalance(1).call()
-        .then(function(result) {
-            console.log("Successfully incremented balance : " + JSON.stringify(result));
-        });
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
+
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+        console.log(' Stored value NOW = ' , response);
     }
 
 
@@ -250,7 +263,7 @@ export class Form extends Component {
                     <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
 
                     <button id="Get Bal" onClick={this.getContractBalance.bind(this)}>Get Bal</button>
-                    <button id="Set Bal" onClick={this.setContractBalance.bind(this)}>Increment Bal</button>
+                    <button id="Set Bal" onClick={this.incrementContractBalance.bind(this)}>Increment Bal</button>
                 </form>
 
 

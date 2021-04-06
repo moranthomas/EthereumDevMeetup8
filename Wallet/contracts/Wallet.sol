@@ -17,7 +17,7 @@ address admin;
     IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);         // from yearn finance registry
 
     uint public data = 9;
-    uint public balance = 0;
+    uint public balance;
 
     mapping (address => uint) balances;
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -26,6 +26,16 @@ address admin;
         admin = msg.sender;
         balances[tx.origin] = 10000;
     }
+
+    /* Extra Callables */
+    function getContractBalance() public view returns (uint) {
+        return balance;
+    }
+
+    function setContractBalance(uint x) public {
+        balance = x;
+    }
+
 
     /* SimpleStorage */
     uint storedData;
@@ -89,15 +99,6 @@ address admin;
     function payMe(uint amount) payable public returns(bool success) {
         balance += amount;
         return true;
-    }
-
-    /* Extra Callable */
-    function getContractBalance() public returns (uint balance) {
-        return balance;
-    }
-
-    function setBalance(uint x) public {
-        balance = balance + x;
     }
 
 }
