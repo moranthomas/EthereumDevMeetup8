@@ -3,7 +3,6 @@
 /Wallet/node_modules
 /ui/node_modules
 /ui/.eslintcache
-ui/package.json
 
 # testing
 /coverage
