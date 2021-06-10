@@ -3,6 +3,7 @@
 /Wallet/node_modules
 /ui/node_modules
 /ui/.eslintcache
+/ui/src/build/contracts
 
 # testing
 /coverage

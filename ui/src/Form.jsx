@@ -32,7 +32,7 @@ export class Form extends Component {
             contractAddress: '',
             contractInstance: '',
             accountBalance: '',
-            amountEth: '1.0',
+            amountEth: '',
             ganacheUrl: '',
             txHashRef: '',
             resultRef: ''
@@ -97,28 +97,33 @@ export class Form extends Component {
     }
 
 
-    // getWalletAddressFromConfig() {
-    //     this.setState( {contractAddress: this.contractAddress});
-    // }
+    /***************************************************************/
+    /** My alternative code for using local config and JSON files **/
+    /***************************************************************/
 
-    // getContractABIFromJsonFile(file) {
-    //     /*  Dynamic loading of the contract ABI from filesystem - not yet implemented */
-    //      const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
-    //     const abiString = JSON.stringify(file.abi);
-    //     console.log(file.abi);
-    //     const abi = contractAbi;
-    //     this.setState({ contractABI: abi });
-    // }
+    /* getWalletAddressFromConfig() {
+        this.setState( {contractAddress: this.contractAddress});
+    }
 
-    // async createContract() {
-    //     let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-    //     const web3 = new Web3(web3Provider);
-    //     const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
-    //     let contractMethods = await contractInstance.methods;
-    //     console.log('Contract Methods: ', contractMethods);
-    //     this.setState( {contractInstance: contractInstance});
-    // }
+    getContractABIFromJsonFile(file) {
+         *//*  Dynamic loading of the contract ABI from filesystem - not yet implemented *//*
+         const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
+        const abiString = JSON.stringify(file.abi);
+        console.log(file.abi);
+        const abi = contractAbi;
+        this.setState({ contractABI: abi });
+    }
 
+    async createContract() {
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+        const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
+        let contractMethods = await contractInstance.methods;
+        console.log('Contract Methods: ', contractMethods);
+        this.setState( {contractInstance: contractInstance});
+    } */
+
+/***************************************************************/
 
     /* Storage interaction */
     getContractBalance = async(event) => {
@@ -150,7 +155,10 @@ export class Form extends Component {
 
 
 
-    /* Amount Utilities */
+    /***************************************************************/
+    /*                         STORAGE UTILITIES                   */
+    /***************************************************************/
+
     handleChangeAmount(event) {
         this.setState({ amount: event.target.value });
     }
@@ -162,51 +170,57 @@ export class Form extends Component {
         this.setState({ toAccount: event.target.value });
     }
 
-
     handleSubmitAmount(event) {
         alert(`Amt submiited: ${this.state.amount}`);
         event.preventDefault();
     }
 
-    handleChangeDepositDAI(event) {
-        this.setState({value: event.target.value});
-    }
-
-    handleSubmitDepositDAI(event) {
+    // Use ES7 async / await for dealing with Promises in a more elegant way.
+    incrementAmount = async(event) => {
         event.preventDefault();
-        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        //const web3 = new Web3(web3Provider);
+        const { accounts, contract } = this.state;
 
-        this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
-            console.log(gasAmount);
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
 
-            if(gasAmount === 5000000)
-                console.log('Method ran out of gas');
-        });
-
-
-        this.state.contractInstance.methods.payMe(2.0)
-            .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
-            function(error, transactionHash) {
-
-                if(error){
-                    console.log( "Transaction error" ,error);
-                    //self.setState({ resultRef: "Transaction Failed!" });
-                }
-                else{
-                    //Get transaction hash
-                    console.log('Transaction Succeeded, Transaction Hash: ' +transactionHash);
-                }
-            }
-        );
-
-        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
-        .then(function(result) {
-            console.log("Balance is : " + JSON.stringify(result));
-        });
-
+        await contract.methods.setContractBalance(value).send({ from: accounts[0] });
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
     }
 
+    handleChangeAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ tempValue: value });
+    }
+
+    handleSetAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ setValue: value });
+    }
+
+    setAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+        var setValue = Number(this.state.setValue);
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await contract.methods.setContractBalance(setValue).send({ from: accounts[0] })
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+
+
+
+    /***************************************************************/
+    /*                         TRANSFER UTILITIES                  */
+    /***************************************************************/
 
     transferFunds(event)    {
 
@@ -247,6 +261,77 @@ export class Form extends Component {
     }
 
 
+    /***************************************************************/
+    /*                         DEPOSIT UTILITIES                  */
+    /***************************************************************/
+
+    handleChangeDepositDAI(event) {
+        this.setState({value: event.target.value});
+    }
+
+    handleSubmitDepositDAI(event) {
+        event.preventDefault();
+        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        //const web3 = new Web3(web3Provider);
+
+        this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
+            console.log(gasAmount);
+
+            if(gasAmount === 5000000)
+                console.log('Method ran out of gas');
+        });
+
+
+        this.state.contractInstance.methods.payMe(2.0)
+            .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
+            function(error, transactionHash) {
+
+                if(error){
+                    console.log( "Transaction error" ,error);
+                    //self.setState({ resultRef: "Transaction Failed!" });
+                }
+                else{
+                    //Get transaction hash
+                    console.log('Transaction Succeeded, Transaction Hash: ' +transactionHash);
+                }
+            }
+        );
+
+        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
+        .then(function(result) {
+            console.log("Balance is : " + JSON.stringify(result));
+        });
+
+    }
+
+    /** ETHER DEPOSIT FUNCTIONS **/
+    handleDepositEther = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ amountEth: value });
+    }
+
+     depositEther = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+        var amtEthValue = Number(this.state.amountEth);
+        console.log('here');
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await contract.methods.deposit().send({ from: accounts[1] })
+        const response = await contract.methods.getContractBalance().call();
+
+        // Update state with the result.
+        // this.setState({ storageValue: response });
+    }
+
+
+
+
+
+    /***************************************************************/
+    /*                         UI CODE                             */
+    /***************************************************************/
 
     render() {
         const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px' };
@@ -285,6 +370,18 @@ export class Form extends Component {
                         <input type="submit" value="Submit" />
                     </div>
                 </form>
+
+                <form>
+                    <div style = {accountsStyle} className="row">
+                        <label htmlFor="text">New Amount ETH stored in Contract: </label>
+                        <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleSetAmount.bind(this)}
+                        placeholder="Enter Amount ...">
+                        </input>
+                        <button id="Set Bal" onClick={this.depositEther.bind(this)}>Set Amount ETH</button>
+                    </div>
+                </form>
+
+
 
                 <form>
                     <div className="row">
@@ -343,46 +440,6 @@ export class Form extends Component {
 
             </div>
         )
-    }
-
-    // Use ES7 async / await for dealing with Promises in a more elegant way.
-    incrementAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await contract.methods.setContractBalance(value).send({ from: accounts[0] });
-        // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-    }
-
-    handleChangeAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ tempValue: value });
-    }
-
-    handleSetAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ setValue: value });
-    }
-
-    setAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-        var setValue = Number(this.state.setValue);
-
-        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await contract.methods.setContractBalance(setValue).send({ from: accounts[0] })
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
     }
 
 }

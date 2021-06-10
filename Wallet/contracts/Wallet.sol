@@ -18,8 +18,11 @@ address admin;
 
     uint public data = 9;
     uint private balance;
+    uint contractBalance = address(this).balance;
 
     mapping (address => uint) balances;
+
+    event Balance(uint);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
     constructor() public {
@@ -27,11 +30,18 @@ address admin;
         balances[tx.origin] = 10000;
     }
 
-    fallback() external payable  {
+    /*fallback() external payable  {
         // safety refund if sent to contract.
         msg.sender.transfer(msg.value);
         // solidity has access to this global object msg - message metadata available whenever you call a function
+    }*/
+
+    // NEW
+    function deposit() payable public {
+        contractBalance += msg.value;
+        emit Balance(contractBalance);
     }
+
 
     /* Extra Callables */
     function getContractBalance() public view returns (uint) {
