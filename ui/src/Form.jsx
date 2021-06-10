@@ -38,16 +38,10 @@ export class Form extends Component {
             resultRef: ''
         };
 
-         // Redundant: constructor bindings
-        //  this.handleChangeDepositDAI = this.handleChangeDepositDAI.bind(this);
-        //  this.handleSubmitDepositDAI = this.handleSubmitDepositDAI.bind(this);
-
     }
 
     componentDidMount = async () => {
         try {
-
-
           const web3 = await getWeb3();                     // Get network provider and web3 instance.
           const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
           const networkId = await web3.eth.net.getId();     // Get the contract instance.
@@ -67,8 +61,8 @@ export class Form extends Component {
           this.setState( {contractAddress: deployedNetwork.address});
           this.setState( {ganacheUrl: web3utils.ganacheUrl});
 
-          // this.state.contractABI = contractAbi;          // Get the  abi from config.js
-          // this.getWalletAddressFromConfig();             // Get address  from config.js
+          // this.state.contractABI = contractAbi;   // Get the  abi from config.js
+          // this.getWalletAddressFromConfig();      // Get address  from config.js
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
           // this.createContract();                // Alternative to  react trufflebox method
           /*********************************************************************************/
@@ -98,7 +92,7 @@ export class Form extends Component {
 
 
     /***************************************************************/
-    /** My alternative code for using local config and JSON files **/
+    /** Alternative code for using local config and JSON files    **/
     /***************************************************************/
 
     /* getWalletAddressFromConfig() {
@@ -123,45 +117,13 @@ export class Form extends Component {
         this.setState( {contractInstance: contractInstance});
     } */
 
-/***************************************************************/
 
-    /* Storage interaction */
-    getContractBalance = async(event) => {
-        event.preventDefault();
-
-        const { accounts, contract } = this.state;
-        console.log('contract.methods = ', contract.methods);
-        const response = await contract.methods.getContractBalance().call();
-        console.log('response = ', response);
-    }
-
-    incrementContractBalance = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
-
-        // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-
-        console.log(' Stored value NOW = ' , response);
-    }
 
 
 
     /***************************************************************/
     /*                         STORAGE UTILITIES                   */
     /***************************************************************/
-
-    handleChangeAmount(event) {
-        this.setState({ amount: event.target.value });
-    }
 
     handleChangeFrom(event) {
         this.setState({ fromAccount: event.target.value });
@@ -215,6 +177,33 @@ export class Form extends Component {
         this.setState({ storageValue: response });
     }
 
+    getContractBalance = async(event) => {
+        event.preventDefault();
+
+        const { accounts, contract } = this.state;
+        console.log('contract.methods = ', contract.methods);
+        const response = await contract.methods.getContractBalance().call();
+        console.log('response = ', response);
+    }
+
+    incrementContractBalance = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
+
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+        console.log(' Stored value NOW = ' , response);
+    }
+
 
 
 
@@ -265,6 +254,30 @@ export class Form extends Component {
     /*                         DEPOSIT UTILITIES                  */
     /***************************************************************/
 
+    /** ETHER DEPOSIT FUNCTIONS **/
+    handleChangeDepositEther = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ amountEth: value });
+    }
+
+    depositEther = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+        var amtEthValue = Number(this.state.amountEth);
+        console.log('depositing to contract!');
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await contract.methods.deposit().send({ from: accounts[0],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') })
+        const response = await contract.methods.getContractBalance().call();
+
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+
+
+
     handleChangeDepositDAI(event) {
         this.setState({value: event.target.value});
     }
@@ -304,28 +317,6 @@ export class Form extends Component {
 
     }
 
-    /** ETHER DEPOSIT FUNCTIONS **/
-    handleDepositEther = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ amountEth: value });
-    }
-
-     depositEther = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-        var amtEthValue = Number(this.state.amountEth);
-        console.log('here');
-
-        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await contract.methods.deposit().send({ from: accounts[1] })
-        const response = await contract.methods.getContractBalance().call();
-
-        // Update state with the result.
-        // this.setState({ storageValue: response });
-    }
-
-
 
 
 
@@ -361,27 +352,15 @@ export class Form extends Component {
                     </div>
                 </form> */}
 
-                <form onSubmit={this.handleSubmitAmount.bind(this)}>
-                    <div className="form-control">
-                        <label htmlFor="text">Add Ether: </label>
-                        <input style={inputStyle} type="text" value={this.state.amountEth} onChange={this.handleChangeAmount.bind(this)}
-                        placeholder="Enter Amount ...">
-                        </input>
-                        <input type="submit" value="Submit" />
-                    </div>
-                </form>
-
                 <form>
                     <div style = {accountsStyle} className="row">
-                        <label htmlFor="text">New Amount ETH stored in Contract: </label>
-                        <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleSetAmount.bind(this)}
+                       <label htmlFor="text">Deposit ETH: </label>
+                        <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
                         placeholder="Enter Amount ...">
                         </input>
                         <button id="Set Bal" onClick={this.depositEther.bind(this)}>Set Amount ETH</button>
                     </div>
                 </form>
-
-
 
                 <form>
                     <div className="row">
