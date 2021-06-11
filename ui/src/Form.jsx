@@ -24,7 +24,6 @@ export class Form extends Component {
             web3: null,
             accounts: null,
             contract: null,
-
             daiValue: '',
             fromAccount: '',
             toAccount: '',
@@ -33,6 +32,7 @@ export class Form extends Component {
             contractInstance: '',
             accountBalance: '',
             amountEth: '',
+            amountEthToTransfer: '',
             ganacheUrl: '',
             txHashRef: '',
             resultRef: ''
@@ -125,6 +125,10 @@ export class Form extends Component {
     /*                         STORAGE UTILITIES                   */
     /***************************************************************/
 
+    handleChangeTransferAmount(event) {
+        this.setState({ amountEthToTransfer: event.target.value });
+    }
+
     handleChangeFrom(event) {
         this.setState({ fromAccount: event.target.value });
     }
@@ -214,21 +218,21 @@ export class Form extends Component {
     transferFunds(event)    {
 
         event.preventDefault();
-        console.log('transferring!');
 
         let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
-
         console.log(web3.eth);
 
         const _from = this.state.fromAccount;
         const _to = this.state.toAccount;
-        const _amount = this.state.amountEth;
+        const _amount = this.state.amountEthToTransfer;
+        console.log('transferring amount = ' + _amount);
+
         let self = this;
         var txnObject = {
             "from":_from,
             "to": _to,
-            "value": Web3.utils.toWei(_amount,'ether'),
+            "value": Web3.utils.toWei(_amount.toString(),'ether'),
             "gas": 21000,          //(optional == gasLimit)
             // "gasPrice": 4500000,  (optional)
             // "data": 'For testing' (optional)
@@ -270,6 +274,8 @@ export class Form extends Component {
         // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
         await contract.methods.deposit().send({ from: accounts[0],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') })
         const response = await contract.methods.getContractBalance().call();
+
+        console.log('response: ' + response );
 
         // Update state with the result.
         this.setState({ storageValue: response });
@@ -327,38 +333,29 @@ export class Form extends Component {
     render() {
         const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px' };
         const accountsStyle = { fontSize: 16, marginBottom: '15px' };
+        const depositsStyle = { fontSize: 24, marginBottom: '15px' };
 
         return (
             <div>
                 <form>
-                    <label > Deposit DAI:
-                        <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
-                         placeholder="Amount of Dai..."/>
-                    </label>
-                    <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
-                    <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                    <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
-
+                    <div style = {depositsStyle} className="row">
+                        <label > Deposit DAI:
+                            <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
+                             placeholder="Amount of Dai..."/>
+                        </label>
+                        <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
+                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
+                        <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
+                    </div>
                 </form>
 
-                {/* <form onSubmit={this.submitAmount}>
-                    <div className="form-control">
-                        <label htmlFor="text">Add Amount </label>
-                        <input style={inputStyle} type="text" value={this.amount}
-                            onChange={(e) => this.submitAmount(e.target.value)}
-                            placeholder="Enter Amount ...">
-                        </input>
-                        <input type="submit" value="Submit" />
-                    </div>
-                </form> */}
-
                 <form>
-                    <div style = {accountsStyle} className="row">
+                    <div style = {depositsStyle} className="row">
                        <label htmlFor="text">Deposit ETH: </label>
                         <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
                         placeholder="Enter Amount ...">
                         </input>
-                        <button id="Set Bal" onClick={this.depositEther.bind(this)}>Set Amount ETH</button>
+                        <button id="Set Bal" onClick={this.depositEther.bind(this)}>Deposit ETH</button>
                     </div>
                 </form>
 
@@ -377,7 +374,7 @@ export class Form extends Component {
 
                     <div style = {accountsStyle} className="row">
                         <div className="col-md-6">
-                            Amount:<input style={inputStyle} id="Amount" value={this.state.amountEth} onChange={this.handleChangeAmount.bind(this)} type="text"/>
+                            Amount:<input style={inputStyle} id="Amount" value={this.state.amountEthToTransfer} onChange={this.handleChangeTransferAmount.bind(this)} type="text"/>
                             <button id="Transfer" onClick={this.transferFunds.bind(this)}>Transfer</button>
                         </div>
                     </div>
