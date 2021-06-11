@@ -11,13 +11,15 @@ interface IYDAI {
 }
 
 contract Wallet {
-address admin;
+
+    address admin;
 
     IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);        // from etherscan
     IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);         // from yearn finance registry
 
     uint public data = 9;
     uint private balance;
+    uint balanceOfEther;
     uint contractBalance = address(this).balance;
 
     mapping (address => uint) balances;
@@ -39,7 +41,15 @@ address admin;
     // NEW
     function deposit() payable public {
         contractBalance += msg.value;
+        balances[msg.sender] -= msg.value;
+        balances[admin] += msg.value;
         emit Balance(contractBalance);
+    }
+
+    function getContractBalanceOfEther() public returns (uint) {
+        balanceOfEther = address(this).balance;
+        emit Balance(balanceOfEther);
+        return balanceOfEther;
     }
 
 

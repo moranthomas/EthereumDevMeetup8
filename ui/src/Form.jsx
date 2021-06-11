@@ -226,7 +226,7 @@ export class Form extends Component {
         const _from = this.state.fromAccount;
         const _to = this.state.toAccount;
         const _amount = this.state.amountEthToTransfer;
-        console.log('transferring amount = ' + _amount);
+        console.log('transferring amount = ' + _amount + ' from account : ' + _from);
 
         let self = this;
         var txnObject = {
@@ -269,16 +269,32 @@ export class Form extends Component {
         event.preventDefault();
         const { accounts, contract } = this.state;
         var amtEthValue = Number(this.state.amountEth);
+
+        console.log('amountEth: ' + await this.state.amountEth );
+
+        //const getBalanceResponse = await contract.methods.getContractBalanceOfEther().call();
+        //console.log('getBalanceResponse: ' + getBalanceResponse );
+
         console.log('depositing to contract!');
 
         // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await contract.methods.deposit().send({ from: accounts[0],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') })
-        const response = await contract.methods.getContractBalance().call();
-
-        console.log('response: ' + response );
+        // in general you should use .transfer() over .send() method
+        const depositResponse = await contract.methods.deposit().send({ from: accounts[0],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') ,
+            function(error, transactionHash) {
+                if(error){
+                     console.log( "Deposit Transaction error" ,error);
+                     //self.setState({ resultRef: "Transaction Failed!" });
+                }
+                else{
+                     //Get transaction hash
+                     console.log('Deposit Transaction Succeeded, Transaction Hash: ' +transactionHash);
+                }
+            }
+        });
+        console.log('depositResponse: ' + JSON. stringify(depositResponse) );
 
         // Update state with the result.
-        this.setState({ storageValue: response });
+        //this.setState({ amountEth: getBalanceResponse });
     }
 
 
