@@ -20,7 +20,8 @@ contract Wallet {
     uint public data = 9;
     uint private balance;
     uint balanceOfEther;
-    uint contractBalance = address(this).balance;
+    //uint contractBalance = address(this).balance;
+    uint contractBalance;
 
     mapping (address => uint) balances;
 
@@ -32,11 +33,11 @@ contract Wallet {
         balances[tx.origin] = 10000;
     }
 
-    /*fallback() external payable  {
+    fallback() external payable  {
         // safety refund if sent to contract.
         msg.sender.transfer(msg.value);
         // solidity has access to this global object msg - message metadata available whenever you call a function
-    }*/
+    }
 
     // NEW
     function deposit() payable public {
@@ -53,7 +54,7 @@ contract Wallet {
     }
 
 
-    /* Extra Callables */
+    /* Storage Functions */
     function getContractBalance() public view returns (uint) {
         return balance;
     }

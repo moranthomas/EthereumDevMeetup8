@@ -279,22 +279,12 @@ export class Form extends Component {
 
         // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
         // in general you should use .transfer() over .send() method
-        const depositResponse = await contract.methods.deposit().send({ from: accounts[0],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') ,
-            function(error, transactionHash) {
-                if(error){
-                     console.log( "Deposit Transaction error" ,error);
-                     //self.setState({ resultRef: "Transaction Failed!" });
-                }
-                else{
-                     //Get transaction hash
-                     console.log('Deposit Transaction Succeeded, Transaction Hash: ' +transactionHash);
-                }
-            }
-        });
+        const depositResponse = await contract.methods.deposit().send({ from: accounts[1],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
         console.log('depositResponse: ' + JSON. stringify(depositResponse) );
 
-        // Update state with the result.
-        //this.setState({ amountEth: getBalanceResponse });
+        // Update state with the result
+        var updatedAmountEth = Number(this.state.amountEth) + amtEthValue;
+        this.setState({ amountEth: updatedAmountEth });
     }
 
 
@@ -372,6 +362,12 @@ export class Form extends Component {
                         placeholder="Enter Amount ...">
                         </input>
                         <button id="Set Bal" onClick={this.depositEther.bind(this)}>Deposit ETH</button>
+                    </div>
+
+                    <div style = {accountsStyle} className="row">
+                        <div className="col-md-4">
+                            <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEth} </p>
+                        </div>
                     </div>
                 </form>
 
