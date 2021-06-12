@@ -17,11 +17,8 @@ contract Wallet {
     IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);        // from etherscan
     IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);         // from yearn finance registry
 
-    uint public data = 9;
-    uint private balance;
-    uint balanceOfEther;
-    //uint contractBalance = address(this).balance;
-    uint contractBalance;
+    uint private contractStorageBalance;
+    uint contractBalanceOfEther;
 
     mapping (address => uint) balances;
 
@@ -33,42 +30,61 @@ contract Wallet {
         balances[tx.origin] = 10000;
     }
 
-    fallback() external payable  {
-        // safety refund if sent to contract.
-        msg.sender.transfer(msg.value);
+    /*fallback() external payable  {
+        msg.sender.transfer(msg.value);      // safety refund if ether sent to this contract in error
         // solidity has access to this global object msg - message metadata available whenever you call a function
-    }
+    }*/
 
-    // NEW
+
     function deposit() payable public {
-        contractBalance += msg.value;
+        //contractBalanceOfEther = getBalance(address(this));
+        //contractBalanceOfEther = address(this).balance;
+        contractBalanceOfEther += msg.value;
         balances[msg.sender] -= msg.value;
         balances[admin] += msg.value;
-        emit Balance(contractBalance);
+        emit Balance(contractBalanceOfEther);
     }
 
     function getContractBalanceOfEther() public returns (uint) {
-        balanceOfEther = address(this).balance;
-        emit Balance(balanceOfEther);
-        return balanceOfEther;
+        contractBalanceOfEther = address(this).balance;
+        emit Balance(contractBalanceOfEther);
+        return contractBalanceOfEther;
     }
+
+    function sendCoin(address receiver, uint amount) public returns(bool sufficient) {
+        if (balances[msg.sender] < amount) return false;
+        balances[msg.sender] -= amount;
+        balances[receiver] += amount;
+        emit Transfer(msg.sender, receiver, amount);
+        return true;
+    }
+
+    function getBalance(address addr) public view returns(uint){
+        return getBalance(addr);
+    }
+
+
 
 
     /* Storage Functions */
-    function getContractBalance() public view returns (uint) {
-        return balance;
+    function getContractStorageBalance() public view returns (uint) {
+        return contractStorageBalance;
     }
 
-    function setContractBalance(uint x) public {
-        balance = x;
+    function setContractStorageBalance(uint x) public {
+        contractStorageBalance = x;
     }
 
-    function incrementContractBalance(uint x) public {
-        balance = x;
+    function incrementContractStorageBalance(uint x) public {
+        contractStorageBalance = x;
     }
 
 
 
+
+
+
+    /* YEARN FUNCTIONS */
     function save(uint amount) external {
         // No need for admin check here.
         dai.transferFrom(msg.sender, address(this), amount);    // from sender to this wallet
@@ -99,23 +115,5 @@ contract Wallet {
         return balanceShares * price;
     }
 
-    function sendCoin(address receiver, uint amount) public returns(bool sufficient) {
-        if (balances[msg.sender] < amount) return false;
-        balances[msg.sender] -= amount;
-        balances[receiver] += amount;
-        emit Transfer(msg.sender, receiver, amount);
-        return true;
-    }
-
-    function getBalance(address addr) public view returns(uint){
-		return getBalance(addr);
-    }
-
-
-    /* Extra Callable */
-    function payMe(uint amount) payable public returns(bool success) {
-        balance += amount;
-        return true;
-    }
 
 }

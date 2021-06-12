@@ -118,142 +118,6 @@ export class Form extends Component {
     } */
 
 
-
-
-
-    /***************************************************************/
-    /*                         STORAGE UTILITIES                   */
-    /***************************************************************/
-
-    handleChangeTransferAmount(event) {
-        this.setState({ amountEthToTransfer: event.target.value });
-    }
-
-    handleChangeFrom(event) {
-        this.setState({ fromAccount: event.target.value });
-    }
-    handleChangeTo(event) {
-        this.setState({ toAccount: event.target.value });
-    }
-
-    handleSubmitAmount(event) {
-        alert(`Amt submiited: ${this.state.amount}`);
-        event.preventDefault();
-    }
-
-    // Use ES7 async / await for dealing with Promises in a more elegant way.
-    incrementAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await contract.methods.setContractBalance(value).send({ from: accounts[0] });
-        // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-    }
-
-    handleChangeAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ tempValue: value });
-    }
-
-    handleSetAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ setValue: value });
-    }
-
-    setAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-        var setValue = Number(this.state.setValue);
-
-        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await contract.methods.setContractBalance(setValue).send({ from: accounts[0] })
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-    }
-
-    getContractBalance = async(event) => {
-        event.preventDefault();
-
-        const { accounts, contract } = this.state;
-        console.log('contract.methods = ', contract.methods);
-        const response = await contract.methods.getContractBalance().call();
-        console.log('response = ', response);
-    }
-
-    incrementContractBalance = async(event) => {
-        event.preventDefault();
-        const { accounts, contract } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await contract.methods.setContractBalance(1).send({ from: accounts[0] });
-
-        // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-
-        console.log(' Stored value NOW = ' , response);
-    }
-
-
-
-
-    /***************************************************************/
-    /*                         TRANSFER UTILITIES                  */
-    /***************************************************************/
-
-    transferFunds(event)    {
-
-        event.preventDefault();
-
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        console.log(web3.eth);
-
-        const _from = this.state.fromAccount;
-        const _to = this.state.toAccount;
-        const _amount = this.state.amountEthToTransfer;
-        console.log('transferring amount = ' + _amount + ' from account : ' + _from);
-
-        let self = this;
-        var txnObject = {
-            "from":_from,
-            "to": _to,
-            "value": Web3.utils.toWei(_amount.toString(),'ether'),
-            "gas": 21000,          //(optional == gasLimit)
-            // "gasPrice": 4500000,  (optional)
-            // "data": 'For testing' (optional)
-            // "nonce": 10           (optional)
-        };
-
-        web3.eth.sendTransaction(txnObject, function(error, result){
-            if(error){
-                console.log( "Transaction error" ,error);
-                self.setState({ resultRef: "Transaction Failed!" });
-            }
-            else{
-                //Get transaction hash
-                console.log('Transaction Succeeded, Transaction Hash: ' +result);
-                self.setState({ txHashRef: result });
-                self.setState({ resultRef: "Transaction Succeeded!" });
-            }
-        });
-    }
-
-
     /***************************************************************/
     /*                         DEPOSIT UTILITIES                  */
     /***************************************************************/
@@ -306,7 +170,6 @@ export class Form extends Component {
                 console.log('Method ran out of gas');
         });
 
-
         this.state.contractInstance.methods.payMe(2.0)
             .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
             function(error, transactionHash) {
@@ -326,7 +189,141 @@ export class Form extends Component {
         .then(function(result) {
             console.log("Balance is : " + JSON.stringify(result));
         });
+    }
 
+
+
+
+    /***************************************************************/
+    /*                         STORAGE UTILITIES                   */
+    /***************************************************************/
+
+    handleChangeFrom(event) {
+        this.setState({ fromAccount: event.target.value });
+    }
+    handleChangeTo(event) {
+        this.setState({ toAccount: event.target.value });
+    }
+
+    handleSubmitAmount(event) {
+        alert(`Amt submiited: ${this.state.amount}`);
+        event.preventDefault();
+    }
+
+    // Use ES7 async / await for dealing with Promises in a more elegant way.
+    incrementAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractStorageBalance(value).send({ from: accounts[0] });
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+    handleChangeAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ tempValue: value });
+    }
+
+    handleSetAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ setValue: value });
+    }
+
+    setAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+        var setValue = Number(this.state.setValue);
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await contract.methods.setContractStorageBalance(setValue).send({ from: accounts[0] })
+        const response = await contract.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+    getContractBalance = async(event) => {
+        event.preventDefault();
+
+        const { accounts, contract } = this.state;
+        console.log('contract.methods = ', contract.methods);
+        const response = await contract.methods.getContractStorageBalance().call();
+        console.log('response = ', response);
+    }
+
+    incrementContractBalance = async(event) => {
+        event.preventDefault();
+        const { accounts, contract } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await contract.methods.setContractStorageBalance(1).send({ from: accounts[0] });
+
+        // Get the value from the contract to prove it worked.
+        const response = await contract.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+        console.log(' Stored value NOW = ' , response);
+    }
+
+
+
+
+    /***************************************************************/
+    /*                         TRANSFER UTILITIES                  */
+    /***************************************************************/
+
+    handleChangeTransferAmount(event) {
+        this.setState({ amountEthToTransfer: event.target.value });
+    }
+
+    transferFunds(event)    {
+
+        event.preventDefault();
+
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+        console.log(web3.eth);
+
+        const _from = this.state.fromAccount;
+        const _to = this.state.toAccount;
+        const _amount = this.state.amountEthToTransfer;
+        console.log('transferring amount = ' + _amount + ' from account : ' + _from);
+
+        let self = this;
+        var txnObject = {
+            "from":_from,
+            "to": _to,
+            "value": Web3.utils.toWei(_amount.toString(),'ether'),
+            "gas": 21000,          //(optional == gasLimit)
+            // "gasPrice": 4500000,  (optional)
+            // "data": 'For testing' (optional)
+            // "nonce": 10           (optional)
+        };
+
+        web3.eth.sendTransaction(txnObject, function(error, result){
+            if(error){
+                console.log( "Transaction error" ,error);
+                self.setState({ resultRef: "Transaction Failed!" });
+            }
+            else{
+                //Get transaction hash
+                console.log('Transaction Succeeded, Transaction Hash: ' +result);
+                self.setState({ txHashRef: result });
+                self.setState({ resultRef: "Transaction Succeeded!" });
+            }
+        });
     }
 
 
