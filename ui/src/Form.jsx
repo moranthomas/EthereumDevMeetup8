@@ -131,7 +131,7 @@ export class Form extends Component {
 
     depositEther = async(event) => {
         event.preventDefault();
-        const { accounts, contract } = this.state;
+        const { accounts, fromAccount, contract } = this.state;
         var amtEthValue = Number(this.state.amountEth);
 
         console.log('amountEth: ' + await this.state.amountEth );
@@ -140,11 +140,15 @@ export class Form extends Component {
         //console.log('getBalanceResponse: ' + getBalanceResponse );
 
         console.log('depositing to contract!');
+        console.log('from address => ' + fromAccount);
+        console.log('accounts => ' + accounts);
+        console.log('this.state.fromAccount = ' + this.state.fromAccount);
 
-        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        // We use arrow functions to avoid scoping and 'this' issues like having to use 'self'
         // in general you should use .transfer() over .send() method
-        const depositResponse = await contract.methods.deposit().send({ from: accounts[1],  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
-        console.log('depositResponse: ' + JSON. stringify(depositResponse) );
+        const depositResponse = await contract.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
+
+        console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
         // Update state with the result
         var updatedAmountEth = Number(this.state.amountEth) + amtEthValue;
