@@ -5,8 +5,8 @@ import Form from './Form';
 function App() {
 
   var imageStyle = {
-    width: '450px',
-    height: '250px'
+    width: '350px',
+    height: '170px'
   }
 
   return (

@@ -346,18 +346,6 @@ export class Form extends Component {
             <div>
                 <form>
                     <div style = {depositsStyle} className="row">
-                        <label > Deposit DAI:
-                            <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
-                             placeholder="Amount of Dai..."/>
-                        </label>
-                        <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
-                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                        <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
-                    </div>
-                </form>
-
-                <form>
-                    <div style = {depositsStyle} className="row">
                        <label htmlFor="text">Deposit ETH: </label>
                         <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
                         placeholder="Enter Amount ...">
@@ -369,6 +357,18 @@ export class Form extends Component {
                         <div className="col-md-4">
                             <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEth} </p>
                         </div>
+                    </div>
+                </form>
+
+                <form>
+                    <div style = {depositsStyle} className="row">
+                        <label > Deposit DAI:
+                            <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
+                             placeholder="Amount of Dai..."/>
+                        </label>
+                        <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
+                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
+                        <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
                     </div>
                 </form>
 
