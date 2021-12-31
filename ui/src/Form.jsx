@@ -338,9 +338,10 @@ export class Form extends Component {
     /***************************************************************/
 
     render() {
-        const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px' };
+        const inputStyle = { padding: '5px', marginLeft: '30px', marginRight: '30px', width: '100px' };
+        const inputStyleSmall = { padding: '5px', marginLeft: '30px', marginRight: '30px', width: '80px' };
         const accountsStyle = { fontSize: 16, marginBottom: '15px' };
-        const depositsStyle = { fontSize: 24, marginBottom: '15px' };
+        const depositsStyle = { fontSize: 18, marginBottom: '15px' };
 
         return (
             <div>
@@ -348,7 +349,7 @@ export class Form extends Component {
                     <div style = {depositsStyle} className="row">
                        <label htmlFor="text">Deposit ETH: </label>
                         <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
-                        placeholder="Enter Amount ...">
+                        placeholder="Amount ...">
                         </input>
                         <button id="Set Bal" onClick={this.depositEther.bind(this)}>Deposit ETH</button>
                     </div>
@@ -387,7 +388,7 @@ export class Form extends Component {
 
                     <div style = {accountsStyle} className="row">
                         <div className="col-md-6">
-                            Amount:<input style={inputStyle} id="Amount" value={this.state.amountEthToTransfer} onChange={this.handleChangeTransferAmount.bind(this)} type="text"/>
+                            Amount:<input style={inputStyleSmall} id="Amount" value={this.state.amountEthToTransfer} onChange={this.handleChangeTransferAmount.bind(this)} type="text"/>
                             <button id="Transfer" onClick={this.transferFunds.bind(this)}>Transfer</button>
                         </div>
                     </div>
@@ -406,16 +407,16 @@ export class Form extends Component {
                 <form>
                     <div style = {accountsStyle} className="row">
                         <label htmlFor="text">Add Amount to Contract: </label>
-                        <input style={inputStyle} type="text" value={this.state.value}  onChange={this.handleChangeAmount.bind(this)}
-                        placeholder="Enter Amount ...">
+                        <input style={inputStyleSmall} type="text" value={this.state.value}  onChange={this.handleChangeAmount.bind(this)}
+                        placeholder="Amount ...">
                         </input>
                         <button id="Set Bal" onClick={this.incrementAmount.bind(this)}>Increment Amount</button>
                     </div>
 
                     <div style = {accountsStyle} className="row">
                         <label htmlFor="text">New Amount stored in Contract: </label>
-                        <input style={inputStyle} type="text" value={this.state.setValue}  onChange={this.handleSetAmount.bind(this)}
-                        placeholder="Enter Amount ...">
+                        <input style={inputStyleSmall} type="text" value={this.state.setValue}  onChange={this.handleSetAmount.bind(this)}
+                        placeholder="Amount ...">
                         </input>
                         <button id="Set Bal" onClick={this.setAmount.bind(this)}>Set Amount</button>
                     </div>
