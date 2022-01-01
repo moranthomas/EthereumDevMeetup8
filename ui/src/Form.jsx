@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
 import WalletContract from "./build/contracts/Wallet.json";
-//import { contractAbi, contractAddress } from './utils/config';
+//import { contractAbi, walletContractAddress } from './utils/config';
 import getWeb3 from "./utils/getWeb3";
 
 const web3utils = require('./utils/Web3 Utils');
@@ -27,8 +27,8 @@ export class Form extends Component {
             amountDai: '',
             fromAccount: '',
             toAccount: '',
-            contractABI: '',
-            contractAddress: '',
+            walletContractABI: '',
+            walletContractAddress: '',
             contractInstance: '',
             accountBalance: '',
             amountEth: '',
@@ -50,18 +50,18 @@ export class Form extends Component {
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
           this.setState({ web3, accounts, walletContractInstance: walletInstance });
-          this.fromAddressIndex = 1;                                // Account From: Default to index1
-          this.toAddressIndex = 2;                                  // Account To: Default to index2
+          this.fromAddressIndex = 1;                        // Account From: Default to index1
+          this.toAddressIndex = 2;                          // Account To:   Default to index2
           console.log("Ethereum blockchain address: ", web3utils.ganacheUrl);
           console.log("NetworkId: ", networkId);
 
           /*********************************************************************************/
           this.loadBlockchainData();
-          this.setState( {contractABI: WalletContract.abi});
-          this.setState( {contractAddress: deployedNetwork.address});
+          this.setState( {walletContractABI: WalletContract.abi});
+          this.setState( {walletContractAddress: deployedNetwork.address});
           this.setState( {ganacheUrl: web3utils.ganacheUrl});
 
-          // this.state.contractABI = contractAbi;   // Get the  abi from config.js
+          // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
           // this.createContract();                // Alternative to  react trufflebox method
@@ -94,7 +94,7 @@ export class Form extends Component {
     /***************************************************************/
 
     /* getWalletAddressFromConfig() {
-        this.setState( {contractAddress: this.contractAddress});
+        this.setState( {walletContractAddress: this.walletContractAddress});
     }
 
     getContractABIFromJsonFile(file) {
@@ -103,22 +103,22 @@ export class Form extends Component {
         const abiString = JSON.stringify(file.abi);
         console.log(file.abi);
         const abi = contractAbi;
-        this.setState({ contractABI: abi });
+        this.setState({ walletContractABI: abi });
     }
 
     async createContract() {
         let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         const web3 = new Web3(web3Provider);
-        const contractInstance  = new web3.eth.Contract(contractAbi, contractAddress);
+        const contractInstance  = new web3.eth.Contract(contractAbi, walletContractAddress);
         let contractMethods = await contractInstance.methods;
         console.log('Contract Methods: ', contractMethods);
         this.setState( {contractInstance: contractInstance});
     } */
 
 
-    /***************************************************************/
-    /*                         DEPOSIT UTILITIES                  */
-    /***************************************************************/
+    /**********************************************************************/
+    /*                         DEPOSIT ETHER UTILITIES                    */
+    /**********************************************************************/
 
     /** ETHER DEPOSIT FUNCTIONS **/
     handleChangeDepositEther = async(event) => {
@@ -145,6 +145,13 @@ export class Form extends Component {
         var updatedAmountEth = Number(this.state.amountEth) + amtEthValue;
         this.setState({ amountEth: updatedAmountEth });
     }
+
+
+
+
+    /****************************************************/
+    /*                DEPOSIT DAI UTILITIES             */
+    /****************************************************/
 
     /** DAI Deposiit functions **/
     handleChangeDepositDAI = async(event) => {
@@ -277,7 +284,7 @@ export class Form extends Component {
 
 
     /***************************************************************/
-    /*                         TRANSFER UTILITIES                  */
+    /*                   TRANSFER FUNDS UTILITIES                  */
     /***************************************************************/
 
     handleChangeTransferAmount(event) {

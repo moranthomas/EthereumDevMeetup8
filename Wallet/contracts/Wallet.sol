@@ -1,5 +1,6 @@
 pragma solidity  >=0.6.0 <0.9.0;
 
+import './Dai.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 //https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol;
 
@@ -14,8 +15,9 @@ contract Wallet {
 
     address admin;
 
-    IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);        // from etherscan
-    IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);         // from yearn finance registry
+    IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);    // from etherscan
+    IYDAI yDai = IYDAI(0xC2cB1040220768554cf699b0d863A3cd4324ce32);     // from yearn finance registry
+    Dai mockDai = Dai(0xafdd547172Da6cE9441Ef4aaC1A6c73cc69F48E6);      // will change on deployment
 
     uint private contractStorageBalance;
     uint contractBalanceOfEther;
@@ -32,13 +34,12 @@ contract Wallet {
 
     /*fallback() external payable  {
         msg.sender.transfer(msg.value);      // safety refund if ether sent to this contract in error
-        // solidity has access to this global object msg - message metadata available whenever you call a function
+        // solidity has access to the global 'msg' object which contains metadata
+        // that is available whenever you call a function
     }*/
 
 
     function deposit() payable public {
-        //contractBalanceOfEther = getBalance(address(this));
-        //contractBalanceOfEther = address(this).balance;
         contractBalanceOfEther += msg.value;
         balances[msg.sender] -= msg.value;
         balances[admin] += msg.value;
@@ -113,6 +114,13 @@ contract Wallet {
         uint price = yDai.getPricePerFullShare();
         uint balanceShares = yDai.balanceOf(address(this));
         return balanceShares * price;
+    }
+
+    // Get Balance of Our Mock Dai
+    function balanceOfMockDai() public view returns(uint) {
+        //uint price = mockDai.getPricePerFullShare();
+        uint balanceMockDai = mockDai.balanceOf(address(this));
+        return balanceMockDai;
     }
 
 
