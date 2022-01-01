@@ -1,10 +1,10 @@
 /*jshint esversion: 8 */
 import React, { Component } from 'react';
 import Web3 from 'web3';
-import WalletContract from "./build/contracts/Wallet.json";
-//import { contractAbi, walletContractAddress } from './utils/config';
 import getWeb3 from "./utils/getWeb3";
-
+import WalletContract from "./build/contracts/Wallet.json";
+import DaiContract from "./build/contracts/Dai.json";
+//import { contractAbi, walletContractAddress } from './utils/config';
 const web3utils = require('./utils/Web3 Utils');
 const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
 const ganacheUrl = "http://localhost:8545";
@@ -24,15 +24,17 @@ export class Form extends Component {
             web3: null,
             accounts: null,
             walletContract: null,
+            walletContractABI: '',
+            walletContractAddress: '',
+            amountEthStored: '',
+            amountEthToDeposit: '',
+            amountEtherToDisplay: '',
+            amountEtherToTransfer: '',
             amountDai: '',
             fromAccount: '',
             toAccount: '',
-            walletContractABI: '',
-            walletContractAddress: '',
-            contractInstance: '',
-            accountBalance: '',
-            amountEth: '',
-            amountEthToTransfer: '',
+            accountEthBalance: '',
+
             ganacheUrl: '',
             txHashRef: '',
             resultRef: ''
@@ -47,9 +49,10 @@ export class Form extends Component {
           const networkId = await web3.eth.net.getId();     // Get the contract instance.
           const deployedNetwork = WalletContract.networks[networkId];
           const walletInstance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
+          const daiInstance = new web3.eth.Contract(DaiContract.abi, deployedNetwork && deployedNetwork.address )
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
-          this.setState({ web3, accounts, walletContractInstance: walletInstance });
+          this.setState({ web3, accounts, walletContractInstance: walletInstance, daiContractInstance: daiInstance});
           this.fromAddressIndex = 1;                        // Account From: Default to index1
           this.toAddressIndex = 2;                          // Account To:   Default to index2
           console.log("Ethereum blockchain address: ", web3utils.ganacheUrl);
@@ -57,9 +60,7 @@ export class Form extends Component {
 
           /*********************************************************************************/
           this.loadBlockchainData();
-          this.setState( {walletContractABI: WalletContract.abi});
-          this.setState( {walletContractAddress: deployedNetwork.address});
-          this.setState( {ganacheUrl: web3utils.ganacheUrl});
+          this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address, ganacheUrl: web3utils.ganacheUrl});
 
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
@@ -84,14 +85,14 @@ export class Form extends Component {
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
         this.setState({ fromAccount: accounts[this.fromAddressIndex],
                         toAccount: accounts[this.toAddressIndex],
-                        accountBalance: balanceInEth});
+                        accountEthBalance: balanceInEth});
         console.log('this.state', this.state);
     }
 
 
-    /***************************************************************/
-    /** Alternative code for using local config and JSON files    **/
-    /***************************************************************/
+    /*********************************************************************/
+    /** Alternative code to Web3 - using local config and JSON files    **/
+    /*********************************************************************/
 
     /* getWalletAddressFromConfig() {
         this.setState( {walletContractAddress: this.walletContractAddress});
@@ -116,34 +117,38 @@ export class Form extends Component {
     } */
 
 
+
+
+
     /**********************************************************************/
     /*                         DEPOSIT ETHER UTILITIES                    */
     /**********************************************************************/
 
     /** ETHER DEPOSIT FUNCTIONS **/
-    handleChangeDepositEther = async(event) => {
+    handleChangeDepositEther(event) {
         event.preventDefault();
         var value = event.target.value;
-        this.setState({ amountEth: value });
+        this.setState({ amountEthToDeposit: value });
     }
 
     depositEther = async(event) => {
         event.preventDefault();
         const { accounts, fromAccount, walletContractInstance } = this.state;
-        var amtEthValue = Number(this.state.amountEth);
+        var amtEthValue = Number(this.state.amountEthToDeposit);
 
-        console.log('amountEth: ' + await this.state.amountEth );
+        console.log('amountEth: ' + await this.state.amountEthToDeposit );
         console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
 
-        // We use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        // in general you should use .transfer() over .send() method
+        // We use arrow functions to avoid scoping and 'this' issues like having to use 'self' - in general favour .transfer() over .send()
         const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
 
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
         // Update state with the result
-        var updatedAmountEth = Number(this.state.amountEth) + amtEthValue;
-        this.setState({ amountEth: updatedAmountEth });
+        var updatedAmountEth = Number(this.state.amountEthStored) + amtEthValue;
+        console.log('updatedAmountEth: ' + JSON.stringify(updatedAmountEth) );
+        console.log('this.state.amountEthStored: ' + JSON.stringify(this.state.amountEthStored) );
+        this.setState({ amountEthStored: updatedAmountEth });
     }
 
 
@@ -155,16 +160,20 @@ export class Form extends Component {
 
     /** DAI Deposiit functions **/
     handleChangeDepositDAI = async(event) => {
-            event.preventDefault();
-            var value = event.target.value;
-            this.setState({ amountDai: value });
-        }
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ amountDai: value });
+    }
 
-    handleSubmitDepositDAI(event) {
+    handleSubmitDepositDAI = async (event) => {
         event.preventDefault();
 
-        //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        //const web3 = new Web3(web3Provider);
+        const { accounts, fromAccount, walletContractInstance } = this.state;
+        var amtEthValue = Number(this.state.amountEth);
+
+        console.log('amountEth: ' + await this.state.amountEth );
+        console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
+
 
         this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
             console.log(gasAmount);
@@ -355,7 +364,7 @@ export class Form extends Component {
 
                     <div style = {accountsStyle} className="row">
                         <div className="col-md-4">
-                            <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEth} </p>
+                            <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEthStored} </p>
                         </div>
                     </div>
                 </form>
@@ -368,7 +377,7 @@ export class Form extends Component {
                         </label>
                         <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
                         <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                        <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
+                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
                     </div>
                     <div style = {accountsStyle} className="row">
                         <div className="col-md-4">
