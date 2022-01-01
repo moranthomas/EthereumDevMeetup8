@@ -23,8 +23,8 @@ export class Form extends Component {
             setValue: '',
             web3: null,
             accounts: null,
-            contract: null,
-            daiValue: '',
+            walletContract: null,
+            amountDai: '',
             fromAccount: '',
             toAccount: '',
             contractABI: '',
@@ -46,10 +46,10 @@ export class Form extends Component {
           const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
           const networkId = await web3.eth.net.getId();     // Get the contract instance.
           const deployedNetwork = WalletContract.networks[networkId];
-          const instance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
+          const walletInstance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
-          this.setState({ web3, accounts, contract: instance });
+          this.setState({ web3, accounts, walletContractInstance: walletInstance });
           this.fromAddressIndex = 1;                                // Account From: Default to index1
           this.toAddressIndex = 2;                                  // Account To: Default to index2
           console.log("Ethereum blockchain address: ", web3utils.ganacheUrl);
@@ -68,9 +68,7 @@ export class Form extends Component {
           /*********************************************************************************/
 
         } catch (error) {
-            alert(
-                `Failed to load web3, accounts, or contract. Check console for details.`,
-            );
+            alert(`Failed to load web3, accounts, or contract. Check console for details.`,);
             console.error(error);
         }
       };
@@ -131,22 +129,15 @@ export class Form extends Component {
 
     depositEther = async(event) => {
         event.preventDefault();
-        const { accounts, fromAccount, contract } = this.state;
+        const { accounts, fromAccount, walletContractInstance } = this.state;
         var amtEthValue = Number(this.state.amountEth);
 
         console.log('amountEth: ' + await this.state.amountEth );
-
-        //const getBalanceResponse = await contract.methods.getContractBalanceOfEther().call();
-        //console.log('getBalanceResponse: ' + getBalanceResponse );
-
-        console.log('depositing to contract!');
-        console.log('from address => ' + fromAccount);
-        console.log('accounts => ' + accounts);
-        console.log('this.state.fromAccount = ' + this.state.fromAccount);
+        console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
 
         // We use arrow functions to avoid scoping and 'this' issues like having to use 'self'
         // in general you should use .transfer() over .send() method
-        const depositResponse = await contract.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
+        const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
 
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
@@ -155,15 +146,16 @@ export class Form extends Component {
         this.setState({ amountEth: updatedAmountEth });
     }
 
-
-
-
-    handleChangeDepositDAI(event) {
-        this.setState({value: event.target.value});
-    }
+    /** DAI Deposiit functions **/
+    handleChangeDepositDAI = async(event) => {
+            event.preventDefault();
+            var value = event.target.value;
+            this.setState({ amountDai: value });
+        }
 
     handleSubmitDepositDAI(event) {
         event.preventDefault();
+
         //let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
         //const web3 = new Web3(web3Provider);
 
@@ -217,15 +209,15 @@ export class Form extends Component {
     // Use ES7 async / await for dealing with Promises in a more elegant way.
     incrementAmount = async(event) => {
         event.preventDefault();
-        const { accounts, contract } = this.state;
+        const { accounts, walletContractInstance } = this.state;
 
         var increment =  Number(this.state.tempValue);
         var storedValue = Number(this.state.storageValue);
         var value = storedValue+increment;
 
-        await contract.methods.setContractStorageBalance(value).send({ from: accounts[0] });
+        await walletContractInstance.methods.setContractStorageBalance(value).send({ from: accounts[0] });
         // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractStorageBalance().call();
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
         // Update state with the result.
         this.setState({ storageValue: response });
     }
@@ -244,12 +236,12 @@ export class Form extends Component {
 
     setAmount = async(event) => {
         event.preventDefault();
-        const { accounts, contract } = this.state;
+        const { accounts, walletContractInstance } = this.state;
         var setValue = Number(this.state.setValue);
 
         // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await contract.methods.setContractStorageBalance(setValue).send({ from: accounts[0] })
-        const response = await contract.methods.getContractStorageBalance().call();
+        await walletContractInstance.methods.setContractStorageBalance(setValue).send({ from: accounts[0] })
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
         // Update state with the result.
         this.setState({ storageValue: response });
     }
@@ -257,24 +249,24 @@ export class Form extends Component {
     getContractBalance = async(event) => {
         event.preventDefault();
 
-        const { accounts, contract } = this.state;
-        console.log('contract.methods = ', contract.methods);
-        const response = await contract.methods.getContractStorageBalance().call();
+        const { accounts, walletContractInstance } = this.state;
+        console.log('walletContractInstance.methods = ', walletContractInstance.methods);
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
         console.log('response = ', response);
     }
 
     incrementContractBalance = async(event) => {
         event.preventDefault();
-        const { accounts, contract } = this.state;
+        const { accounts, walletContractInstance } = this.state;
 
         var increment =  Number(this.state.tempValue);
         var storedValue = Number(this.state.storageValue);
         var value = storedValue+increment;
 
-        await contract.methods.setContractStorageBalance(1).send({ from: accounts[0] });
+        await walletContractInstance.methods.setContractStorageBalance(1).send({ from: accounts[0] });
 
         // Get the value from the contract to prove it worked.
-        const response = await contract.methods.getContractStorageBalance().call();
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
         // Update state with the result.
         this.setState({ storageValue: response });
 
@@ -370,6 +362,11 @@ export class Form extends Component {
                         <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
                         <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
                         <p style = {accountsStyle} >Your account balance: {this.state.accountBalance} Eth </p>
+                    </div>
+                    <div style = {accountsStyle} className="row">
+                        <div className="col-md-4">
+                            <p style = {accountsStyle} > The stored DAI value is now: {this.state.amountDai} </p>
+                        </div>
                     </div>
                 </form>
 
