@@ -63,7 +63,7 @@ export class Form extends Component {
           this.loadBlockchainData();
           this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address, ganacheUrl: web3utils.ganacheUrl});
           this.getContractBalanceOfEther();
-                    
+
 
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
@@ -93,6 +93,13 @@ export class Form extends Component {
     }
 
     async getContractBalanceOfEther() {
+
+        const { walletContractInstance } = this.state;
+        console.log('this.state.walletContractAddress = ', this.state.walletContractAddress);
+        const altBalance = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
+        console.log('altBalance = ', altBalance);
+
+
         const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
         const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
         console.log('Wallet Contract Balance of Ether : ' + contractBalanceOfEtherFromWei + " ETH" );
@@ -102,7 +109,7 @@ export class Form extends Component {
 
 
     /*********************************************************************/
-    /** Alternative code to Web3 - using local config and JSON files    **/
+    /**   Alternative code to Web3 - using local config and JSON files  **/
     /*********************************************************************/
 
     /* getWalletAddressFromConfig() {
@@ -110,8 +117,8 @@ export class Form extends Component {
     }
 
     getContractABIFromJsonFile(file) {
-         *//*  Dynamic loading of the contract ABI from filesystem - not yet implemented *//*
-         const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
+        //  Dynamic loading of the contract ABI from filesystem - not yet implemented
+        const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
         const abiString = JSON.stringify(file.abi);
         console.log(file.abi);
         const abi = contractAbi;
@@ -185,6 +192,7 @@ export class Form extends Component {
         console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
 
 
+
         this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
             console.log(gasAmount);
 
@@ -227,10 +235,6 @@ export class Form extends Component {
         this.setState({ toAccount: event.target.value });
     }
 
-    handleSubmitAmount(event) {
-        alert(`Amt submiited: ${this.state.amount}`);
-        event.preventDefault();
-    }
 
     // Use ES7 async / await for dealing with Promises in a more elegant way.
     incrementAmount = async(event) => {
