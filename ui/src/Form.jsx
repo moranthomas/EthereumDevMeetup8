@@ -94,11 +94,11 @@ export class Form extends Component {
 
     async getContractBalanceOfEther() {
 
-        const { walletContractInstance } = this.state;
-        console.log('this.state.walletContractAddress = ', this.state.walletContractAddress);
-        const altBalance = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
-        console.log('altBalance = ', altBalance);
-
+//         NOT WORKING YET
+//         const { walletContractInstance } = this.state;
+//         console.log('this.state.walletContractAddress = ', this.state.walletContractAddress);
+//         const altBalance = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
+//         console.log('altBalance = ', altBalance);
 
         const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
         const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
@@ -137,6 +137,134 @@ export class Form extends Component {
 
 
 
+    /***************************************************************/
+    /*                   TRANSFER FUNDS UTILITIES                  */
+    /***************************************************************/
+
+    handleChangeTransferAmount(event) {
+        this.setState({ amountEthToTransfer: event.target.value });
+    }
+
+    transferFunds(event)    {
+
+        event.preventDefault();
+
+        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new Web3(web3Provider);
+        console.log(web3.eth);
+
+        const _from = this.state.fromAccount;
+        const _to = this.state.toAccount;
+        const _amount = this.state.amountEthToTransfer;
+        console.log('transferring amount = ' + _amount + ' from account : ' + _from);
+
+        let self = this;
+        var txnObject = {
+            "from":_from,
+            "to": _to,
+            "value": Web3.utils.toWei(_amount.toString(),'ether'),
+            "gas": 21000,          //(optional == gasLimit)
+            // "gasPrice": 4500000,  (optional)
+            // "data": 'For testing' (optional)
+            // "nonce": 10           (optional)
+        };
+
+        web3.eth.sendTransaction(txnObject, function(error, result){
+            if(error){
+                console.log( "Transaction error" ,error);
+                self.setState({ resultRef: "Transaction Failed!" });
+            }
+            else{
+                //Get transaction hash
+                console.log('Transaction Succeeded, Transaction Hash: ' +result);
+                self.setState({ txHashRef: result });
+                self.setState({ resultRef: "Transaction Succeeded!" });
+            }
+        });
+    }
+
+
+    /***************************************************************/
+    /*                         STORAGE UTILITIES                   */
+    /***************************************************************/
+
+    handleChangeFrom(event) {
+        this.setState({ fromAccount: event.target.value });
+    }
+    handleChangeTo(event) {
+        this.setState({ toAccount: event.target.value });
+    }
+
+
+    // Use ES7 async / await for dealing with Promises in a more elegant way.
+    incrementAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, walletContractInstance } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await walletContractInstance.methods.setContractStorageBalance(value).send({ from: accounts[0] });
+        // Get the value from the contract to prove it worked.
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+    handleChangeAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ tempValue: value });
+    }
+
+    handleSetAmount = async(event) => {
+        event.preventDefault();
+        var value = event.target.value;
+        this.setState({ setValue: value });
+    }
+
+    setAmount = async(event) => {
+        event.preventDefault();
+        const { accounts, walletContractInstance } = this.state;
+        var setValue = Number(this.state.setValue);
+
+        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
+        await walletContractInstance.methods.setContractStorageBalance(setValue).send({ from: accounts[0] })
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+    }
+
+
+    getContractBalance = async(event) => {
+        event.preventDefault();
+
+        const { accounts, walletContractInstance } = this.state;
+        console.log('walletContractInstance.methods = ', walletContractInstance.methods);
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
+        console.log('response = ', response);
+    }
+
+    incrementContractBalance = async(event) => {
+        event.preventDefault();
+        const { accounts, walletContractInstance } = this.state;
+
+        var increment =  Number(this.state.tempValue);
+        var storedValue = Number(this.state.storageValue);
+        var value = storedValue+increment;
+
+        await walletContractInstance.methods.setContractStorageBalance(1).send({ from: accounts[0] });
+
+        // Get the value from the contract to prove it worked.
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
+        // Update state with the result.
+        this.setState({ storageValue: response });
+
+        console.log(' Stored value NOW = ' , response);
+    }
+
+
 
     /**********************************************************************/
     /*                         DEPOSIT ETHER UTILITIES                    */
@@ -155,13 +283,13 @@ export class Form extends Component {
         var amtEthValue = Number(this.state.amountEthToDeposit);
 
         console.log('amountEth: ' + await this.state.amountEthToDeposit );
-        console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
+        console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + this.state.walletContractAddress);
 
         // We use arrow functions to avoid scoping and 'this' issues like having to use 'self' - in general favour .transfer() over .send()
         const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
-        await this.getContractBalanceOfEther();
+        //await this.getContractBalanceOfEther();
 
         /* NOT WORKING YET
         const contractBalanceOfEther = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
@@ -225,137 +353,6 @@ export class Form extends Component {
 
 
     /***************************************************************/
-    /*                         STORAGE UTILITIES                   */
-    /***************************************************************/
-
-    handleChangeFrom(event) {
-        this.setState({ fromAccount: event.target.value });
-    }
-    handleChangeTo(event) {
-        this.setState({ toAccount: event.target.value });
-    }
-
-
-    // Use ES7 async / await for dealing with Promises in a more elegant way.
-    incrementAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, walletContractInstance } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await walletContractInstance.methods.setContractStorageBalance(value).send({ from: accounts[0] });
-        // Get the value from the contract to prove it worked.
-        const response = await walletContractInstance.methods.getContractStorageBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-    }
-
-    handleChangeAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ tempValue: value });
-    }
-
-    handleSetAmount = async(event) => {
-        event.preventDefault();
-        var value = event.target.value;
-        this.setState({ setValue: value });
-    }
-
-    setAmount = async(event) => {
-        event.preventDefault();
-        const { accounts, walletContractInstance } = this.state;
-        var setValue = Number(this.state.setValue);
-
-        // Always use arrow functions to avoid scoping and 'this' issues like having to use 'self'
-        await walletContractInstance.methods.setContractStorageBalance(setValue).send({ from: accounts[0] })
-        const response = await walletContractInstance.methods.getContractStorageBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-    }
-
-    getContractBalance = async(event) => {
-        event.preventDefault();
-
-        const { accounts, walletContractInstance } = this.state;
-        console.log('walletContractInstance.methods = ', walletContractInstance.methods);
-        const response = await walletContractInstance.methods.getContractStorageBalance().call();
-        console.log('response = ', response);
-    }
-
-    incrementContractBalance = async(event) => {
-        event.preventDefault();
-        const { accounts, walletContractInstance } = this.state;
-
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
-
-        await walletContractInstance.methods.setContractStorageBalance(1).send({ from: accounts[0] });
-
-        // Get the value from the contract to prove it worked.
-        const response = await walletContractInstance.methods.getContractStorageBalance().call();
-        // Update state with the result.
-        this.setState({ storageValue: response });
-
-        console.log(' Stored value NOW = ' , response);
-    }
-
-
-
-
-    /***************************************************************/
-    /*                   TRANSFER FUNDS UTILITIES                  */
-    /***************************************************************/
-
-    handleChangeTransferAmount(event) {
-        this.setState({ amountEthToTransfer: event.target.value });
-    }
-
-    transferFunds(event)    {
-
-        event.preventDefault();
-
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        console.log(web3.eth);
-
-        const _from = this.state.fromAccount;
-        const _to = this.state.toAccount;
-        const _amount = this.state.amountEthToTransfer;
-        console.log('transferring amount = ' + _amount + ' from account : ' + _from);
-
-        let self = this;
-        var txnObject = {
-            "from":_from,
-            "to": _to,
-            "value": Web3.utils.toWei(_amount.toString(),'ether'),
-            "gas": 21000,          //(optional == gasLimit)
-            // "gasPrice": 4500000,  (optional)
-            // "data": 'For testing' (optional)
-            // "nonce": 10           (optional)
-        };
-
-        web3.eth.sendTransaction(txnObject, function(error, result){
-            if(error){
-                console.log( "Transaction error" ,error);
-                self.setState({ resultRef: "Transaction Failed!" });
-            }
-            else{
-                //Get transaction hash
-                console.log('Transaction Succeeded, Transaction Hash: ' +result);
-                self.setState({ txHashRef: result });
-                self.setState({ resultRef: "Transaction Succeeded!" });
-            }
-        });
-    }
-
-
-
-
-    /***************************************************************/
     /*                         UI CODE                             */
     /***************************************************************/
 
@@ -368,44 +365,9 @@ export class Form extends Component {
         return (
             <div>
                 <form>
-                    <div style = {depositsStyle} className="row">
-                       <label htmlFor="text">Deposit ETH: </label>
-                        <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
-                        placeholder="Amount ...">
-                        </input>
-                        <button id="Set Bal" onClick={this.depositEther.bind(this)}>Deposit ETH</button>
-                    </div>
-
-                    <div style = {accountsStyle} className="row">
-                        <div className="col-md-4">
-                            <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEthStored} </p>
-                        </div>
-                    </div>
-                </form>
-
-                <form>
-                    <div style = {depositsStyle} className="row">
-                        <label > Deposit DAI:
-                            <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
-                             placeholder="Amount of Dai..."/>
-                        </label>
-                        <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
-                    </div>
-                    <div style = {accountsStyle} className="row">
-                        <div className="col-md-4">
-                            <p style = {accountsStyle} > The stored DAI value is now: {this.state.amountDai} </p>
-                        </div>
-                    </div>
-                    <div>
-                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
-                    </div>
-                </form>
-
-                <form>
                     <div className="row">
                         <div className="col-md-6">
-                            <label htmlFor="name" className="col-lg-2 control-label"><h4>Transfer</h4></label>
+                            <label htmlFor="name" className="col-lg-2 control-label"><h5>Transfer</h5></label>
                         </div>
                     </div>
                     <div style = {accountsStyle} className="row">
@@ -456,6 +418,46 @@ export class Form extends Component {
                         <p style = {accountsStyle} > The stored value is now: {this.state.storageValue} </p>
                     </div>
                 </div>
+
+                <div className="row">
+                    <div className="col-md-6">
+                        <label htmlFor="name" className="col-lg-2 control-label"><h5>Deposit</h5></label>
+                    </div>
+                </div>
+                 <form>
+                    <div style = {depositsStyle} className="row">
+                       <label htmlFor="text">Deposit ETH: </label>
+                        <input style={inputStyle} type="text" value={this.state.amountEth}  onChange={this.handleChangeDepositEther.bind(this)}
+                        placeholder="Amount ...">
+                        </input>
+                        <button id="Set Bal" onClick={this.depositEther.bind(this)}>Deposit ETH</button>
+                    </div>
+
+                    <div style = {accountsStyle} className="row">
+                        <div className="col-md-4">
+                            <p style = {accountsStyle} > The stored ETH value is now: {this.state.amountEthStored} </p>
+                        </div>
+                    </div>
+                </form>
+
+                <form>
+                    <div style = {depositsStyle} className="row">
+                        <label > Deposit DAI:
+                            <input style={inputStyle} type="text" value={this.state.value} onChange={this.handleChangeDepositDAI.bind(this)}
+                             placeholder="Amount of Dai..."/>
+                        </label>
+                        <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
+                    </div>
+                    <div style = {accountsStyle} className="row">
+                        <div className="col-md-4">
+                            <p style = {accountsStyle} > The stored DAI value is now: {this.state.amountDai} </p>
+                        </div>
+                    </div>
+                    <div>
+                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
+                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
+                    </div>
+                </form>
 
             </div>
         )
