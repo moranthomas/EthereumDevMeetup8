@@ -26,10 +26,11 @@ export class Form extends Component {
             walletContract: null,
             walletContractABI: '',
             walletContractAddress: '',
+
             amountEthStored: '',
             amountEthToDeposit: '',
-            amountEtherToDisplay: '',
-            amountEtherToTransfer: '',
+            amountEthToTransfer: '',
+
             amountDai: '',
             fromAccount: '',
             toAccount: '',
@@ -61,6 +62,8 @@ export class Form extends Component {
           /*********************************************************************************/
           this.loadBlockchainData();
           this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address, ganacheUrl: web3utils.ganacheUrl});
+          this.getContractBalanceOfEther();
+                    
 
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
@@ -87,6 +90,14 @@ export class Form extends Component {
                         toAccount: accounts[this.toAddressIndex],
                         accountEthBalance: balanceInEth});
         console.log('this.state', this.state);
+    }
+
+    async getContractBalanceOfEther() {
+        const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
+        const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
+        console.log('Wallet Contract Balance of Ether : ' + contractBalanceOfEtherFromWei + " ETH" );
+        this.setState({ amountEthStored: contractBalanceOfEtherFromWei });
+        return contractBalanceOfEtherFromWei;
     }
 
 
@@ -141,16 +152,15 @@ export class Form extends Component {
 
         // We use arrow functions to avoid scoping and 'this' issues like having to use 'self' - in general favour .transfer() over .send()
         const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
-
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
-        // Update state with the result
-        var updatedAmountEth = Number(this.state.amountEthStored) + amtEthValue;
-        console.log('updatedAmountEth: ' + JSON.stringify(updatedAmountEth) );
-        console.log('this.state.amountEthStored: ' + JSON.stringify(this.state.amountEthStored) );
-        this.setState({ amountEthStored: updatedAmountEth });
-    }
+        await this.getContractBalanceOfEther();
 
+        /* NOT WORKING YET
+        const contractBalanceOfEther = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
+        console.log('contractBalanceOfEther; : ' + JSON.stringify(contractBalanceOfEther) ); */
+
+    }
 
 
 
@@ -376,13 +386,15 @@ export class Form extends Component {
                              placeholder="Amount of Dai..."/>
                         </label>
                         <button id="Deposit" onClick={this.handleSubmitDepositDAI.bind(this)}>Deposit</button>
-                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
                     </div>
                     <div style = {accountsStyle} className="row">
                         <div className="col-md-4">
                             <p style = {accountsStyle} > The stored DAI value is now: {this.state.amountDai} </p>
                         </div>
+                    </div>
+                    <div>
+                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
+                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
                     </div>
                 </form>
 
