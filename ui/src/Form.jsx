@@ -64,7 +64,6 @@ export class Form extends Component {
           this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address, ganacheUrl: web3utils.ganacheUrl});
           this.getContractBalanceOfEther();
 
-
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
@@ -289,7 +288,8 @@ export class Form extends Component {
         const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
-        //await this.getContractBalanceOfEther();
+        // update balance
+        await this.getContractBalanceOfEther();
 
         /* NOT WORKING YET
         const contractBalanceOfEther = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
@@ -316,37 +316,48 @@ export class Form extends Component {
         const { accounts, fromAccount, walletContractInstance } = this.state;
         var amtEthValue = Number(this.state.amountEth);
 
-        console.log('amountEth: ' + await this.state.amountEth );
-        console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + accounts);
+        console.log('amount DAI: ' + await this.state.amountDai );
+        console.log('depositing DAI to contract from address => ' + fromAccount + ' to address => ' + this.state.walletContractAddress);
+
+        /* await walletContractInstance.methods.setContractStorageBalance(value).send({ from: accounts[0] });
+        // Get the value from the contract to prove it worked.
+        const response = await walletContractInstance.methods.getContractStorageBalance().call();
+         */
+
+        const depositDAIResponse = await walletContractInstance.methods.save(10).send({ from: fromAccount, gas: 100000 });
+        console.log('depositDAIResponse: ' + JSON.stringify(depositDAIResponse) );
+
+       /*  const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
+        const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
+        console.log('Wallet Contract Balance of Ether : ' + contractBalanceOfEtherFromWei + " ETH" ); */
 
 
-
-        this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
-            console.log(gasAmount);
-
-            if(gasAmount === 5000000)
-                console.log('Method ran out of gas');
-        });
-
-        this.state.contractInstance.methods.payMe(2.0)
-            .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
-            function(error, transactionHash) {
-
-                if(error){
-                    console.log( "Transaction error" ,error);
-                    //self.setState({ resultRef: "Transaction Failed!" });
-                }
-                else{
-                    //Get transaction hash
-                    console.log('Transaction Succeeded, Transaction Hash: ' +transactionHash);
-                }
-            }
-        );
-
-        this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
-        .then(function(result) {
-            console.log("Balance is : " + JSON.stringify(result));
-        });
+//         this.state.contractInstance.methods.payMe(2.0).estimateGas({gas: 5000000}, function(error, gasAmount){
+//             console.log(gasAmount);
+//
+//             if(gasAmount === 5000000)
+//                 console.log('Method ran out of gas');
+//         });
+//
+//         this.state.contractInstance.methods.payMe(2.0)
+//             .send({from: '0xc2FC9C109d83c6B521211020525c442e4c2F7f69', gas: 50000},
+//             function(error, transactionHash) {
+//
+//                 if(error){
+//                     console.log( "Transaction error" ,error);
+//                     //self.setState({ resultRef: "Transaction Failed!" });
+//                 }
+//                 else{
+//                     //Get transaction hash
+//                     console.log('Transaction Succeeded, Transaction Hash: ' +transactionHash);
+//                 }
+//             }
+//         );
+//
+//         this.state.contractInstance.methods.getBalanceInEth('0x778f2614776fB677965d0E4eb1Ae9803C64bCd56').call()
+//         .then(function(result) {
+//             console.log("Balance is : " + JSON.stringify(result));
+//         });
     }
 
 
