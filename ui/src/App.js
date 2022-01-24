@@ -1,6 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
 import Form from './Form';
+import MetaMaskOnboarding from '@metamask/onboarding'
+import { OnboardingButton } from './components/OnboardingButton';
 
 function App() {
 
@@ -16,6 +18,8 @@ function App() {
         <p className="App-link" >
           React Yearn Defi Wallet
         </p>
+
+        <OnboardingButton></OnboardingButton>
 
         <img src={logo} style={imageStyle} className="App-logo" alt="logo" />
         <Form/>

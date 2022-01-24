@@ -1,9 +1,11 @@
 # dependencies
 /Utils/node_modules
 /Wallet/node_modules
+/Wallet/package-lock.json
 /ui/node_modules
 /ui/.eslintcache
 /ui/src/build/contracts
+/ui/package-lock.json
 
 # testing
 /coverage
