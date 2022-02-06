@@ -46,8 +46,8 @@ export class Form extends Component {
 
     loadBlockchainData = async () => {
 
-        //const web3 = await getweb3();                         // Get network provider and web3 instance from Metamask
-        const web3 = await getweb3Local();                      // Get network provider and web3 instance from Ganache directly
+        const web3 = await getweb3();                         // Get network provider and web3 instance from Metamask
+        //const web3 = await getweb3Local();                      // Get network provider and web3 instance from Ganache directly
 
         this.setState({ web3: web3 });
 
@@ -99,8 +99,8 @@ export class Form extends Component {
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
           this.setState({ accounts, daiContractInstance: daiInstance});
-          this.fromAddressIndex = 1;                        // Account From: Default to index1
-          this.toAddressIndex = 2;                          // Account To:   Default to index2
+          this.fromAddressIndex = 0;                        // Account From: Default to index1
+          this.toAddressIndex = 1;                          // Account To:   Default to index2
 
 
           this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address});
@@ -112,8 +112,11 @@ export class Form extends Component {
           console.log("this from account: ", this.state.accounts[0]);
           console.log("NetworkId: ", networkId);
 
-          this.setState( { fromAccount: this.state.accounts[0]})
-          this.setState( { toAccount: this.state.accounts[1]})
+          this.setState( { fromAccount: this.state.accounts[this.fromAddressIndex]})
+          this.setState( { toAccount: this.state.accounts[this.toAddressIndex] ? this.state.accounts[this.toAddressIndex] : 0 })    // Check for case where no second account
+
+          await this.getContractBalanceOfEther();
+
           /*********************************************************************************/
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
@@ -129,7 +132,6 @@ export class Form extends Component {
 
 
     async loadBlockchainData() {
-
         // alternative to getweb3
         let web3 = this.state.web3;
         const accounts = await web3.eth.getAccounts();
@@ -141,14 +143,8 @@ export class Form extends Component {
         console.log('this.state', this.state);
     }
 
+
     async getContractBalanceOfEther() {
-
-//         NOT WORKING YET
-//         const { walletContractInstance } = this.state;
-//         console.log('this.state.walletContractAddress = ', this.state.walletContractAddress);
-//         const altBalance = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
-//         console.log('altBalance = ', altBalance);
-
         let web3 = this.state.web3;
         const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
         const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
@@ -156,35 +152,6 @@ export class Form extends Component {
         this.setState({ amountEthStored: contractBalanceOfEtherFromWei });
         return contractBalanceOfEtherFromWei;
     }
-
-
-    /*********************************************************************/
-    /**   Alternative code to web3 - using local config and JSON files  **/
-    /*********************************************************************/
-
-    /* getWalletAddressFromConfig() {
-        this.setState( {walletContractAddress: this.walletContractAddress});
-    }
-
-    getContractABIFromJsonFile(file) {
-        //  Dynamic loading of the contract ABI from filesystem - not yet implemented
-        const contractJSON = JSON.parse(fs.readFileSync(file, 'utf8'));
-        const abiString = JSON.stringify(file.abi);
-        console.log(file.abi);
-        const abi = contractAbi;
-        this.setState({ walletContractABI: abi });
-    }
-
-    async createContract() {
-        let web3Provider = new web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new web3(web3Provider);
-        const contractInstance  = new web3.eth.Contract(contractAbi, walletContractAddress);
-        let contractMethods = await contractInstance.methods;
-        console.log('Contract Methods: ', contractMethods);
-        this.setState( {contractInstance: contractInstance});
-    } */
-
-
 
 
     /***************************************************************/
@@ -294,18 +261,12 @@ export class Form extends Component {
     incrementContractBalance = async(event) => {
         event.preventDefault();
         const { accounts, walletContractInstance } = this.state;
-
-        //var increment =  Number(this.state.tempValue);
-        //var storedValue = Number(this.state.storageValue);
-        //var value = storedValue+increment;
-
         await walletContractInstance.methods.setContractStorageBalance(1).send({ from: accounts[0] });
 
         // Get the value from the contract to prove it worked.
         const response = await walletContractInstance.methods.getContractStorageBalance().call();
         // Update state with the result.
         this.setState({ storageValue: response });
-
         console.log(' Stored value NOW = ' , response);
     }
 
@@ -335,12 +296,8 @@ export class Form extends Component {
         const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": web3.utils.toWei(''+ amtEthValue,'ether') });
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
-        // update balance
+        // get updated balance
         await this.getContractBalanceOfEther();
-
-        /* NOT WORKING YET
-        const contractBalanceOfEther = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
-        console.log('contractBalanceOfEther; : ' + JSON.stringify(contractBalanceOfEther) ); */
 
     }
 
@@ -510,10 +467,6 @@ export class Form extends Component {
                         <div className="col-md-4">
                             <p style = {accountsStyle} > The stored DAI value is now: {this.state.amountDai} </p>
                         </div>
-                    </div>
-                    <div>
-                        <p style = {accountsStyle} >Your account: {this.state.fromAccount.substring(0,13)}</p>
-                        <p style = {accountsStyle} >Your account balance: {this.state.accountEthBalance} Eth </p>
                     </div>
                 </form>
 
