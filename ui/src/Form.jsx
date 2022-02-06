@@ -1,21 +1,11 @@
 /*jshint esversion: 8 */
 import React, { Component } from 'react';
-import Web3 from 'web3';
-import getWeb3 from "./utils/getWeb3";
 import WalletContract from "./build/contracts/Wallet.json";
 import DaiContract from "./build/contracts/Dai.json";
+import getweb3Local from "./utils/Web3Utils";
+import getweb3 from "./utils/getWeb3";
 import MetaMaskOnboarding from '@metamask/onboarding'
-import { OnboardingButton } from './components/OnboardingButton';
-
-//import { contractAbi, walletContractAddress } from './utils/config';
-const web3utils = require('./utils/Web3 Utils');
-const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
-const ganacheUrl = "http://localhost:8545";
-
-
-
-let web3Provider = new Web3.providers.HttpProvider(ganacheUrl);
-var web3 = new Web3(web3Provider);
+const web3utils = require('./utils/Web3Utils');
 
 export class Form extends Component {
 
@@ -32,42 +22,39 @@ export class Form extends Component {
             tempValue: '',
             setValue: '',
             walletContractInstance: '' ,
-
             web3: null,
+            web3Local: null,
             accounts: null,
             walletContract: null,
             walletContractABI: '',
             walletContractAddress: '',
-
             amountEthStored: '',
             amountEthToDeposit: '',
             amountEthToTransfer: '',
-
             amountDai: '',
             fromAccount: '',
             toAccount: '',
             accountEthBalance: '',
-
-            ganacheUrl: '',
+            ganacheUrl: 'http://localhost:8545',
             txHashRef: '',
             resultRef: ''
         };
 
     }
 
-    //isMetaMaskInstalled = () => MetaMaskOnboarding.isMetaMaskInstalled()
+    isMetaMaskInstalled = () => MetaMaskOnboarding.isMetaMaskInstalled()
 
     loadBlockchainData = async () => {
 
-        const web3 = await getWeb3();                         // Get network provider and web3 instance.
+        //const web3 = await getweb3();                         // Get network provider and web3 instance from Metamask
+        const web3 = await getweb3Local();                      // Get network provider and web3 instance from Ganache directly
+
         this.setState({ web3: web3 });
 
         const userAccounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
         const networkId = await web3.eth.net.getId();         // Get the contract instance.
-        const chainId = await web3.eth.getChainId()
-        const networkPort = await web3.eth.net
+        const chainId = await web3.eth.getChainId();
 
-        console.log("networkPort: ", networkPort);
         console.log("networkId: ", networkId);
         console.log("chainId: ", chainId);
         console.log("User Accounts:" , userAccounts);
@@ -100,33 +87,39 @@ export class Form extends Component {
 
     componentDidMount = async () => {
         try {
-          const web3 = await getWeb3();                     // Get network provider and web3 instance.
+          //const web3 = await getweb3();                     // Get network provider and web3 instance.
+          await this.loadBlockchainData();
+          let { web3, web3Local } = this.state;
+
           const accounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
           const networkId = await web3.eth.net.getId();     // Get the contract instance.
           const deployedNetwork = WalletContract.networks[networkId];
-          const walletInstance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
+          // const walletInstance = new web3.eth.Contract(WalletContract.abi, deployedNetwork && deployedNetwork.address );
           const daiInstance = new web3.eth.Contract(DaiContract.abi, deployedNetwork && deployedNetwork.address )
 
           // Set web3, accounts, and contract to the state, and  proceed to interact with contract methods.
-          this.setState({ web3, accounts, walletContractInstance: walletInstance, daiContractInstance: daiInstance});
+          this.setState({ accounts, daiContractInstance: daiInstance});
           this.fromAddressIndex = 1;                        // Account From: Default to index1
           this.toAddressIndex = 2;                          // Account To:   Default to index2
-          console.log("Ethereum blockchain address: ", web3utils.ganacheUrl);
-          console.log("NetworkId: ", networkId);
 
-          /*********************************************************************************/
-          this.loadBlockchainData();
-          this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address, ganacheUrl: web3utils.ganacheUrl});
+
+          this.setState( {walletContractABI: WalletContract.abi, walletContractAddress: deployedNetwork.address});
+          await this.loadContractsFromBlockchain();
           this.getContractBalanceOfEther();
 
+          console.log("Ethereum blockchain address: ", this.state.ganacheUrl);
+          console.log("walletContract.networks: ", WalletContract.networks);
+          console.log("this from account: ", this.state.accounts[0]);
+          console.log("NetworkId: ", networkId);
+
+          this.setState( { fromAccount: this.state.accounts[0]})
+          this.setState( { toAccount: this.state.accounts[1]})
+          /*********************************************************************************/
           // this.state.walletContractABI = contractAbi;   // Get the  abi from config.js
           // this.getWalletAddressFromConfig();      // Get address  from config.js
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
           // this.createContract();                // Alternative to  react trufflebox method
           /*********************************************************************************/
-
-          await this.loadBlockchainData();
-          await this.loadContractsFromBlockchain();
 
         } catch (error) {
             alert(`Failed to load web3, accounts, or contract. Check console for details.`,);
@@ -137,9 +130,8 @@ export class Form extends Component {
 
     async loadBlockchainData() {
 
-        // alternative to getWeb3
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
+        // alternative to getweb3
+        let web3 = this.state.web3;
         const accounts = await web3.eth.getAccounts();
         const balance = await web3.eth.getBalance(accounts[this.fromAddressIndex]);
         const balanceInEth = web3.utils.fromWei(balance, 'ether');
@@ -157,6 +149,7 @@ export class Form extends Component {
 //         const altBalance = await walletContractInstance.methods.getBalance(this.state.walletContractAddress).call();
 //         console.log('altBalance = ', altBalance);
 
+        let web3 = this.state.web3;
         const contractBalanceOfEther = await web3.eth.getBalance(this.state.walletContractAddress);
         const contractBalanceOfEtherFromWei = web3.utils.fromWei(contractBalanceOfEther, "ether");
         console.log('Wallet Contract Balance of Ether : ' + contractBalanceOfEtherFromWei + " ETH" );
@@ -166,7 +159,7 @@ export class Form extends Component {
 
 
     /*********************************************************************/
-    /**   Alternative code to Web3 - using local config and JSON files  **/
+    /**   Alternative code to web3 - using local config and JSON files  **/
     /*********************************************************************/
 
     /* getWalletAddressFromConfig() {
@@ -183,8 +176,8 @@ export class Form extends Component {
     }
 
     async createContract() {
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
+        let web3Provider = new web3.providers.HttpProvider(this.state.ganacheUrl);
+        const web3 = new web3(web3Provider);
         const contractInstance  = new web3.eth.Contract(contractAbi, walletContractAddress);
         let contractMethods = await contractInstance.methods;
         console.log('Contract Methods: ', contractMethods);
@@ -205,11 +198,7 @@ export class Form extends Component {
     transferFunds(event)    {
 
         event.preventDefault();
-
-        let web3Provider = new Web3.providers.HttpProvider(this.state.ganacheUrl);
-        const web3 = new Web3(web3Provider);
-        console.log(web3.eth);
-
+        const web3 = this.state.web3;
         const _from = this.state.fromAccount;
         const _to = this.state.toAccount;
         const _amount = this.state.amountEthToTransfer;
@@ -219,7 +208,7 @@ export class Form extends Component {
         var txnObject = {
             "from":_from,
             "to": _to,
-            "value": Web3.utils.toWei(_amount.toString(),'ether'),
+            "value": web3.utils.toWei(_amount.toString(),'ether'),
             "gas": 21000,          //(optional == gasLimit)
             // "gasPrice": 4500000,  (optional)
             // "data": 'For testing' (optional)
@@ -296,8 +285,7 @@ export class Form extends Component {
 
     getContractBalance = async(event) => {
         event.preventDefault();
-
-        const { accounts, walletContractInstance } = this.state;
+        const { walletContractInstance } = this.state;
         console.log('walletContractInstance.methods = ', walletContractInstance.methods);
         const response = await walletContractInstance.methods.getContractStorageBalance().call();
         console.log('response = ', response);
@@ -307,9 +295,9 @@ export class Form extends Component {
         event.preventDefault();
         const { accounts, walletContractInstance } = this.state;
 
-        var increment =  Number(this.state.tempValue);
-        var storedValue = Number(this.state.storageValue);
-        var value = storedValue+increment;
+        //var increment =  Number(this.state.tempValue);
+        //var storedValue = Number(this.state.storageValue);
+        //var value = storedValue+increment;
 
         await walletContractInstance.methods.setContractStorageBalance(1).send({ from: accounts[0] });
 
@@ -336,14 +324,15 @@ export class Form extends Component {
 
     depositEther = async(event) => {
         event.preventDefault();
-        const { accounts, fromAccount, walletContractInstance } = this.state;
+        const { fromAccount, walletContractInstance } = this.state;
+        const web3 = await this.state.web3;
         var amtEthValue = Number(this.state.amountEthToDeposit);
 
         console.log('amountEth: ' + await this.state.amountEthToDeposit );
         console.log('depositing to contract from address => ' + fromAccount + ' to address => ' + this.state.walletContractAddress);
 
         // We use arrow functions to avoid scoping and 'this' issues like having to use 'self' - in general favour .transfer() over .send()
-        const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": Web3.utils.toWei(''+ amtEthValue,'ether') });
+        const depositResponse = await walletContractInstance.methods.deposit().send({ from:fromAccount,  "value": web3.utils.toWei(''+ amtEthValue,'ether') });
         console.log('depositResponse: ' + JSON.stringify(depositResponse) );
 
         // update balance
@@ -371,7 +360,7 @@ export class Form extends Component {
     handleSubmitDepositDAI = async (event) => {
         event.preventDefault();
 
-        const { accounts, fromAccount, walletContractInstance } = this.state;
+        const { fromAccount, walletContractInstance } = this.state;
         var amtEthValue = Number(this.state.amountEth);
 
         console.log('amount DAI: ' + await this.state.amountDai );
