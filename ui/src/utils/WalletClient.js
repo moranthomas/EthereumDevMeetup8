@@ -41,21 +41,3 @@
   .catch(function(error){
       console.log('Not enuff gas, error = ' + error);
   });
-
-
-  // Wallet Contract Interactions - these will be moved out into the React Components
-
-  /*WalletContract.methods.save(1010).send({from: '0x9b7421fC327E1B5123Ff9aDDD4B21d44557a3a13'})
-  .then(function(receipt){
-    console.log(' SETTING STORAGE DATA: transaction Hash = ' + receipt.transactionHash + ', Gas used = ' + receipt.gasUsed);
-      // Display The Data
-    StorageContract.methods.getData().call((err, data) => {
-      console.log(' STORAGE DATA NOW = ' + data);
-    });
-  });
-
-  StorageContract.methods.getData().call((err, data) => {
-    console.log(' STORAGE DATA BEFORE  = ' + data);
-  });
-
-*/
