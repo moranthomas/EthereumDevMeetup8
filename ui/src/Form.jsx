@@ -4,10 +4,15 @@ import Web3 from 'web3';
 import getWeb3 from "./utils/getWeb3";
 import WalletContract from "./build/contracts/Wallet.json";
 import DaiContract from "./build/contracts/Dai.json";
+import MetaMaskOnboarding from '@metamask/onboarding'
+import { OnboardingButton } from './components/OnboardingButton';
+
 //import { contractAbi, walletContractAddress } from './utils/config';
 const web3utils = require('./utils/Web3 Utils');
 const infuraUrl = "https://mainnet.infura.io/v3/53dbf207e63c42e99cacb63c2d41ec4f";
 const ganacheUrl = "http://localhost:8545";
+
+
 
 let web3Provider = new Web3.providers.HttpProvider(ganacheUrl);
 var web3 = new Web3(web3Provider);
@@ -18,9 +23,16 @@ export class Form extends Component {
         super(props);
 
         this.state = {
+            displayAccount: '',
+            networkId: '',
+            chainId: '',
+            contract: null,
+            balanceInEth: '0',
             storageValue: '',
             tempValue: '',
             setValue: '',
+            walletContractInstance: '' ,
+
             web3: null,
             accounts: null,
             walletContract: null,
@@ -42,6 +54,49 @@ export class Form extends Component {
         };
 
     }
+
+    //isMetaMaskInstalled = () => MetaMaskOnboarding.isMetaMaskInstalled()
+
+    loadBlockchainData = async () => {
+
+        const web3 = await getWeb3();                         // Get network provider and web3 instance.
+        this.setState({ web3: web3 });
+
+        const userAccounts = await web3.eth.getAccounts();    // Use web3 to get the user's accounts.
+        const networkId = await web3.eth.net.getId();         // Get the contract instance.
+        const chainId = await web3.eth.getChainId()
+        const networkPort = await web3.eth.net
+
+        console.log("networkPort: ", networkPort);
+        console.log("networkId: ", networkId);
+        console.log("chainId: ", chainId);
+        console.log("User Accounts:" , userAccounts);
+
+        // getEthBalance
+        var balance = await web3.eth.getBalance(userAccounts[0]);
+        const balanceInEth = web3.utils.fromWei(balance, 'ether');
+        this.setState( { balanceInEth: balanceInEth.substring(0,8)});
+
+        let displayAccount = userAccounts[0].substring(0,8);
+        this.setState({ accounts: userAccounts });
+        this.setState({ displayAccount: displayAccount });
+        this.setState({ networkId: networkId });
+        this.setState({ chainId: chainId });
+    }
+
+    //TODO - Move to common interface
+    loadContractsFromBlockchain = async () => {
+        const web3 = await this.state.web3;
+        const deployedNetwork = WalletContract.networks[this.state.networkId];
+        const WalletContractInstance = new web3.eth.Contract(WalletContract.abi, web3.utils.toChecksumAddress(deployedNetwork.address));
+        console.log("WalletContract.abi = " , WalletContract.abi);
+        console.log("deployedNetwork.address = " , web3.utils.toChecksumAddress(deployedNetwork.address));
+        console.log("WalletContractInstance:" , WalletContractInstance);
+
+        // Set contract to the state, and  proceed to interact with contract methods.
+        this.setState({ walletContractInstance: WalletContractInstance});
+    }
+
 
     componentDidMount = async () => {
         try {
@@ -69,6 +124,9 @@ export class Form extends Component {
           // this.getContractABIFromJsonFile('../Wallet/build/contracts/Wallet.json');
           // this.createContract();                // Alternative to  react trufflebox method
           /*********************************************************************************/
+
+          await this.loadBlockchainData();
+          await this.loadContractsFromBlockchain();
 
         } catch (error) {
             alert(`Failed to load web3, accounts, or contract. Check console for details.`,);

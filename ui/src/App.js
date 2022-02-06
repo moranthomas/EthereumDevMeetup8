@@ -19,7 +19,6 @@ function App() {
           React Yearn Defi Wallet
         </p>
 
-        <OnboardingButton></OnboardingButton>
 
         <img src={logo} style={imageStyle} className="App-logo" alt="logo" />
         <Form/>
